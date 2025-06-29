@@ -50,7 +50,7 @@ const App = () => {
           <Header user={user} onLogout={handleLogout} />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/services" element={<Services />} />
