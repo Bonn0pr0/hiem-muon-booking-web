@@ -1,15 +1,16 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserIcon, CalendarIcon, FileIcon, TrendingUpIcon, ShieldIcon, SettingsIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AccountManagement from "@/components/AccountManagement";
 import SystemReports from "@/components/SystemReports";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
 
   const stats = [
     {
@@ -219,16 +220,32 @@ const AdminDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate('/dashboard/doctor')}
+            >
               👨‍⚕️ Dashboard Bác sĩ
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate('/dashboard/manager')}
+            >
               👔 Dashboard Manager
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate('/dashboard/staff')}
+            >
               👥 Dashboard Staff
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate('/dashboard/user')}
+            >
               👤 Dashboard User
             </Button>
           </CardContent>
