@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 interface HeaderProps {
   user?: {
     name: string;
-    role: 'user' | 'staff' | 'manager';
+    role: 'user' | 'staff' | 'manager' | 'doctor' | 'admin';
   };
   onLogout?: () => void;
 }
@@ -80,10 +80,14 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    if (user.role === 'manager') {
+                    if (user.role === 'admin') {
+                      navigate('/dashboard/admin');
+                    } else if (user.role === 'manager') {
                       navigate('/dashboard/manager');
                     } else if (user.role === 'staff') {
                       navigate('/dashboard/staff');
+                    } else if (user.role === 'doctor') {
+                      navigate('/dashboard/doctor');
                     } else {
                       navigate('/dashboard/user');
                     }

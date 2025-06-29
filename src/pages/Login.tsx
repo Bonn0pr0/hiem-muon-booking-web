@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 
 interface LoginProps {
-  onLogin: (user: { name: string; role: 'user' | 'staff' | 'manager' | 'doctor' }) => void;
+  onLogin: (user: { name: string; role: 'user' | 'staff' | 'manager' | 'doctor' | 'admin' }) => void;
 }
 
 const Login = ({ onLogin }: LoginProps) => {
@@ -18,7 +19,10 @@ const Login = ({ onLogin }: LoginProps) => {
     e.preventDefault();
     
     // Demo login logic - in real app this would authenticate with backend
-    if (email === 'manager@fertilitycare.com') {
+    if (email === 'admin@fertilitycare.com') {
+      onLogin({ name: 'Admin', role: 'admin' });
+      navigate('/dashboard/admin');
+    } else if (email === 'manager@fertilitycare.com') {
       onLogin({ name: 'Manager', role: 'manager' });
       navigate('/dashboard/manager');
     } else if (email === 'staff@fertilitycare.com') {
@@ -94,6 +98,7 @@ const Login = ({ onLogin }: LoginProps) => {
               <div className="mt-4 p-3 bg-pink-50 rounded-lg">
                 <div className="text-pink-600 font-medium mb-2">Tài khoản mặc định:</div>
                 <div className="text-sm text-pink-600">
+                  Admin: admin@fertilitycare.com / @1<br />
                   Manager: manager@fertilitycare.com / @1<br />
                   Staff: staff@fertilitycare.com / @1<br />
                   Doctor: doctor@fertilitycare.com / @1<br />

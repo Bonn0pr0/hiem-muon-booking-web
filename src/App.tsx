@@ -16,6 +16,7 @@ import UserDashboard from "./pages/UserDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import UpdateProfile from "./pages/UpdateProfile";
 import TreatmentHistory from "./pages/TreatmentHistory";
 import OnlineConsultation from "./pages/OnlineConsultation";
@@ -26,7 +27,7 @@ const queryClient = new QueryClient();
 
 type User = {
   name: string;
-  role: 'user' | 'staff' | 'manager' | 'doctor';
+  role: 'user' | 'staff' | 'manager' | 'doctor' | 'admin';
 };
 
 const App = () => {
@@ -58,6 +59,7 @@ const App = () => {
             <Route path="/dashboard/staff" element={<StaffDashboard />} />
             <Route path="/dashboard/manager" element={<ManagerDashboard />} />
             <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
             <Route path="/update-profile" element={<UpdateProfile />} />
             <Route path="/treatment-history" element={<TreatmentHistory />} />
             <Route path="/online-consultation" element={<OnlineConsultation />} />
