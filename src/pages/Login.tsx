@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,14 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Eye, EyeOff } from 'lucide-react';
 import { loginService } from '@/api/loginService';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Define the expected response type
 type LoginResponse = {
   accessToken: string;
   user?: {
     id: number;
     email: string;
     name: string;
+    role?: string;
   };
 };
 
@@ -26,44 +27,27 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // In your handleSubmit function:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
     try {
       const response = await loginService.login(formData);
       const { accessToken, user } = response as LoginResponse;
-
-      // Lưu token và thông tin user
       localStorage.setItem('accessToken', accessToken);
       if (user) {
+        login(user); // cập nhật context
         localStorage.setItem('user', JSON.stringify(user));
       }
-
-      console.log("Đăng nhập thành công! Chào mừng bạn đến với hệ thống.");
-
-      // Xác định role và chuyển hướng
-      let role: 'user' | 'staff' | 'manager' = 'user';
-      if (user?.email.includes('admin') || user?.email.includes('manager')) {
-        role = 'manager';
-      } else if (user?.email.includes('staff')) {
-        role = 'staff';
-      }
-
-      // Chuyển hướng dựa trên role
-      if (role === 'manager') {
-        navigate('/dashboard/manager');
-      } else if (role === 'staff') {
-        navigate('/dashboard/staff');
-      } else {
-        navigate('/customer');
-      }
-      
+      let role: string = user?.role || 'user';
+      if (role === 'admin') navigate('/dashboard/admin');
+      else if (role === 'manager') navigate('/dashboard/manager');
+      else if (role === 'staff') navigate('/dashboard/staff');
+      else if (role === 'doctor') navigate('/dashboard/doctor');
+      else navigate('/dashboard/user');
     } catch (error: any) {
-      console.error('Login error:', error);
       setError(error.message || 'Tài khoản hoặc mật khẩu không đúng.');
     } finally {
       setLoading(false);
@@ -77,24 +61,6 @@ const Login = () => {
     });
   };
 
-  // Optional: Kiểm tra nếu có accessToken thì fetch tài khoản
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return;
-    try {
-      const user = JSON.parse(userStr);
-      if (user.role === 'manager') {
-        navigate('/dashboard/manager');
-      } else if (user.role === 'staff') {
-        navigate('/dashboard/staff');
-      } else {
-        navigate('/customer');
-      }
-    } catch (err) {
-      loginService.clearLoginData();
-    }
-  }, [navigate]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-blue-50 to-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -104,7 +70,6 @@ const Login = () => {
             <span className="text-2xl font-bold text-gray-900">FertilityCare</span>
           </Link>
         </div>
-
         <Card className="shadow-xl">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
@@ -127,7 +92,6 @@ const Login = () => {
                   className="focus:ring-pink-500 focus:border-pink-500"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">Mật khẩu</Label>
                 <div className="relative">
@@ -156,20 +120,16 @@ const Login = () => {
                   </Button>
                 </div>
               </div>
-
-              {/* Hiển thị lỗi */}
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
-
               <div className="flex items-center justify-between">
                 <Link to="/forgot-password" className="text-sm text-pink-600 hover:text-pink-500">
                   Quên mật khẩu?
                 </Link>
               </div>
-
               <Button 
                 type="submit" 
                 className="w-full text-white bg-pink-500 hover:bg-pink-600"
@@ -178,7 +138,6 @@ const Login = () => {
                 {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </Button>
             </form>
-
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Chưa có tài khoản?{' '}
@@ -187,8 +146,6 @@ const Login = () => {
                 </Link>
               </p>
             </div>
-
-            
           </CardContent>
         </Card>
       </div>

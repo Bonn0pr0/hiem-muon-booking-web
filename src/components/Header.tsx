@@ -1,27 +1,19 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface HeaderProps {
-  user?: {
-    name: string;
-    role: 'user' | 'staff' | 'manager' | 'doctor' | 'admin';
-  };
-  onLogout?: () => void;
-}
-
-const Header = ({ user, onLogout }: HeaderProps) => {
+const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
+    logout();
     toast({
       title: "Tạm biệt!",
       description: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Hẹn gặp lại!",
@@ -76,48 +68,27 @@ const Header = ({ user, onLogout }: HeaderProps) => {
 
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-4">
+              <>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    if (user.role === 'admin') {
-                      navigate('/dashboard/admin');
-                    } else if (user.role === 'manager') {
-                      navigate('/dashboard/manager');
-                    } else if (user.role === 'staff') {
-                      navigate('/dashboard/staff');
-                    } else if (user.role === 'doctor') {
-                      navigate('/dashboard/doctor');
-                    } else {
-                      navigate('/dashboard/user');
-                    }
-                  }}
-                  className="text-sm"
+                  onClick={() => navigate('/update-profile')}
+                  className="text-sm flex items-center space-x-2"
                 >
-                  Dashboard
+                  <span className="font-semibold">{user.name}</span>
                 </Button>
-                <span className="text-sm text-muted-foreground">Xin chào, {user.name}</span>
                 <Button variant="outline" onClick={handleLogout} size="sm">
                   Đăng xuất
                 </Button>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/login')}
-                  size="sm"
-                >
+              <>
+                <Button variant="outline" onClick={() => navigate('/login')} size="sm">
                   Đăng nhập
                 </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  size="sm"
-                  className="bg-primary hover:bg-primary/90"
-                >
+                <Button onClick={() => navigate('/register')} size="sm" className="bg-primary hover:bg-primary/90">
                   Đăng ký ngay
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
