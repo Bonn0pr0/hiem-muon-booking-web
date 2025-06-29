@@ -24,7 +24,7 @@ import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-
+//test
 type User = {
   name: string;
   role: 'user' | 'staff' | 'manager' | 'doctor' | 'admin';
