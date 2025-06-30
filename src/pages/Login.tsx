@@ -34,7 +34,9 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
+      console.log('Đang gửi request login với:', formData);
       const response = await loginService.login(formData);
+      console.log('Response từ API:', response);
       const { accessToken, user } = response as LoginResponse;
       localStorage.setItem('accessToken', accessToken);
       if (user) {
@@ -42,12 +44,14 @@ const Login = () => {
         // localStorage.setItem('user', JSON.stringify(user));
       }
       let role: string = user?.role || 'user';
+      console.log('Role của user:', role);
       if (role === 'admin') navigate('/dashboard/admin');
       else if (role === 'manager') navigate('/dashboard/manager');
       else if (role === 'staff') navigate('/dashboard/staff');
       else if (role === 'doctor') navigate('/dashboard/doctor');
       else navigate('/dashboard/user');
     } catch (error: any) {
+      console.error('Lỗi login:', error);
       setError(error.message || 'Tài khoản hoặc mật khẩu không đúng.');
     } finally {
       setLoading(false);

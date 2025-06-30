@@ -11,6 +11,7 @@ export interface LoginResponse {
     id: number;
     email: string;
     name: string;
+    role?: string;
   };
 }
 
@@ -29,7 +30,12 @@ class LoginService {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
+      console.log('LoginService: Gửi request đến:', this.LOGIN_ENDPOINT);
+      console.log('LoginService: Credentials:', credentials);
+      
       const response = await api.post<LoginResponse>(this.LOGIN_ENDPOINT, credentials);
+      
+      console.log('LoginService: Response thành công:', response.data);
       
       // Lưu token vào localStorage
       if (response.data.accessToken) {
@@ -38,6 +44,9 @@ class LoginService {
       
       return response.data;
     } catch (error: any) {
+      console.error('LoginService: Lỗi chi tiết:', error);
+      console.error('LoginService: Response error:', error.response?.data);
+      
       // Xử lý lỗi cụ thể
       if (error.response?.status === 401) {
         throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');

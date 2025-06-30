@@ -20,15 +20,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
-    if (userStr) setUser(JSON.parse(userStr));
+    if (userStr) {
+      console.log('AuthContext: Loading user from localStorage:', userStr);
+      setUser(JSON.parse(userStr));
+    }
   }, []);
 
   const login = (user: User) => {
+    console.log('AuthContext: Login user:', user);
     setUser(user);
     localStorage.setItem("user", JSON.stringify(user));
   };
 
   const logout = () => {
+    console.log('AuthContext: Logout');
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
