@@ -1,5 +1,5 @@
 import api from './api';
-
+ 
 export const getAllAccounts = () => api.get('/api/accounts');
 export const getAccountById = (id: number) => api.get(`/api/accounts/${id}`);
 export const createAccount = (data: any) => api.post('/api/accounts', data);

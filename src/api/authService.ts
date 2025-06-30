@@ -14,13 +14,15 @@ export interface LoginResponse {
   };
 }
 
-export interface RegisterRequest {
+export type RegisterRequest = {
   name: string;
   email: string;
   password: string;
-  age: number;
-  address: string;
-}
+  phone?: string;
+  address?: string;
+  age?: number;
+  gender?: string;
+};
 
 export const authService = {
   // Đăng nhập

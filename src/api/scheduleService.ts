@@ -1,5 +1,5 @@
 import api from './api';
-
+ 
 export const getAllSchedules = () => api.get('/api/schedules');
 export const getScheduleById = (id: number) => api.get(`/api/schedules/${id}`);
 export const createSchedule = (data: any) => api.post('/api/schedules/create', data);

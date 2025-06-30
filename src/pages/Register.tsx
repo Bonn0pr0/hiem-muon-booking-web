@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/api/authService";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -15,15 +15,20 @@ const Register = () => {
     name: '',
     email: '',
     phone: '',
+    address: '',
+    age: '',
+    gender: '',
     password: '',
     confirmPassword: ''
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submit register form");
     
     if (formData.password !== formData.confirmPassword) {
+      console.log("Password mismatch");
       toast({
         title: "Lỗi",
         description: "Mật khẩu xác nhận không khớp",
@@ -33,6 +38,7 @@ const Register = () => {
     }
 
     if (!acceptTerms) {
+      console.log("Terms not accepted");
       toast({
         title: "Lỗi",
         description: "Vui lòng đồng ý với điều khoản sử dụng",
@@ -41,15 +47,35 @@ const Register = () => {
       return;
     }
 
-    toast({
-      title: "Đăng ký thành công",
-      description: "Tài khoản của bạn đã được tạo thành công"
-    });
+    try {
+      console.log("Calling API...");
+      await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        address: formData.address,
+        age: Number(formData.age),
+        gender: formData.gender,
+      });
 
-    navigate('/login');
+      toast({
+        title: "Đăng ký thành công",
+        description: "Tài khoản của bạn đã được tạo thành công"
+      });
+
+      navigate('/login');
+    } catch (error: any) {
+      console.log("API error", error);
+      toast({
+        title: "Đăng ký thất bại",
+        description: error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -111,6 +137,46 @@ const Register = () => {
                 onChange={handleChange}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Địa chỉ</Label>
+              <Input
+                id="address"
+                name="address"
+                type="text"
+                placeholder="Nhập địa chỉ"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Tuổi</Label>
+              <Input
+                id="age"
+                name="age"
+                type="number"
+                placeholder="Nhập tuổi"
+                value={formData.age}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Giới tính</Label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                required
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="MALE">Nam</option>
+                <option value="FEMALE">Nữ</option>
+                <option value="OTHER">Khác</option>
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu</Label>

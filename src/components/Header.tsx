@@ -10,6 +10,8 @@ const Header = () => {
   const { toast } = useToast();
   const { user, logout } = useAuth();
 
+  console.log("Header user:", user);
+
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {

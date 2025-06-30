@@ -39,7 +39,7 @@ const Login = () => {
       localStorage.setItem('accessToken', accessToken);
       if (user) {
         login(user); // cập nhật context
-        localStorage.setItem('user', JSON.stringify(user));
+        // localStorage.setItem('user', JSON.stringify(user));
       }
       let role: string = user?.role || 'user';
       if (role === 'admin') navigate('/dashboard/admin');

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,57 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { EditIcon, Trash2Icon, PlusIcon } from "lucide-react";
+import { treatmentServiceApi } from "@/api/treatmentService";
 
 const ServiceManagement = () => {
   const { toast } = useToast();
-  const [services, setServices] = useState([
-    {
-      id: 1,
-      name: "IUI - Thu tinh trong tử cung",
-      category: "Cơ bản",
-      description: "Phương pháp hỗ trợ sinh sản đơn giản, phù hợp với các trường hợp vô sinh nhẹ.",
-      price: "15.000.000 - 25.000.000 VNĐ",
-      duration: "2-3 tuần",
-      successRate: "15-20%"
-    },
-    {
-      id: 2,
-      name: "IVF - Thu tinh ống nghiệm cơ bản",
-      category: "Nâng cao",
-      description: "Thu tinh ngoài cơ thể với công nghệ tiên tiến, phù hợp với nhiều trường hợp vô sinh.",
-      price: "80.000.000 - 120.000.000 VNĐ",
-      duration: "4-6 tuần",
-      successRate: "40-50%"
-    },
-    {
-      id: 3,
-      name: "ICSI - Tiêm tinh trùng vào bào tương trứng",
-      category: "Nâng cao",
-      description: "Công nghệ IVF kết hợp ICSI, phù hợp với vô sinh nam và trường hợp khó.",
-      price: "100.000.000 - 150.000.000 VNĐ",
-      duration: "4-6 tuần",
-      successRate: "45-55%"
-    },
-    {
-      id: 4,
-      name: "PGT-A - Chẩn đoán di truyền tiền làm tổ",
-      category: "Cao cấp",
-      description: "IVF kết hợp xét nghiệm di truyền phôi, đảm bảo phôi khỏe mạnh.",
-      price: "150.000.000 - 200.000.000 VNĐ",
-      duration: "6-8 tuần",
-      successRate: "60-70%"
-    },
-    {
-      id: 5,
-      name: "Đông lạnh phôi/trứng",
-      category: "Hỗ trợ",
-      description: "Bảo quản phôi hoặc trứng để sử dụng trong tương lai.",
-      price: "5.000.000 - 10.000.000 VNĐ",
-      duration: "1 ngày",
-      successRate: "90%+"
-    }
-  ]);
-
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [newService, setNewService] = useState({
@@ -71,6 +25,18 @@ const ServiceManagement = () => {
     duration: "",
     successRate: ""
   });
+
+  const fetchServices = () => {
+    setLoading(true);
+    treatmentServiceApi.getAll()
+      .then(res => setServices(res.data))
+      .catch(() => setServices([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -87,7 +53,7 @@ const ServiceManagement = () => {
     }
   };
 
-  const addService = () => {
+  const addService = async () => {
     if (!newService.name || !newService.category || !newService.description) {
       toast({
         title: "Lỗi",
@@ -97,36 +63,47 @@ const ServiceManagement = () => {
       return;
     }
 
-    const service = {
-      id: Math.max(...services.map(s => s.id)) + 1,
-      ...newService
-    };
-
-    setServices([...services, service]);
-    setNewService({
-      name: "",
-      category: "",
-      description: "",
-      price: "",
-      duration: "",
-      successRate: ""
-    });
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Thêm dịch vụ thành công",
-      description: `${service.name} đã được thêm vào hệ thống`,
-    });
+    try {
+      await treatmentServiceApi.create(newService);
+      fetchServices();
+      setNewService({
+        name: "",
+        category: "",
+        description: "",
+        price: "",
+        duration: "",
+        successRate: ""
+      });
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Thêm dịch vụ thành công",
+        description: `${newService.name} đã được thêm vào hệ thống`,
+      });
+    } catch (e) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi thêm dịch vụ",
+        variant: "destructive"
+      });
+    }
   };
 
-  const deleteService = (id: number) => {
-    const service = services.find(s => s.id === id);
-    setServices(services.filter(service => service.id !== id));
-    toast({
-      title: "Xóa dịch vụ",
-      description: `${service?.name} đã được xóa khỏi hệ thống`,
-      variant: "destructive"
-    });
+  const deleteService = async (id: number) => {
+    try {
+      await treatmentServiceApi.delete(id);
+      fetchServices();
+      toast({
+        title: "Xóa dịch vụ",
+        description: `Dịch vụ đã được xóa khỏi hệ thống`,
+        variant: "destructive"
+      });
+    } catch (e) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa dịch vụ",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
