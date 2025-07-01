@@ -24,7 +24,8 @@ const Services = () => {
     setLoading(true);
     treatmentServiceApi.getAll()
       .then(res => {
-        setServices(res.data);
+        console.log("API response:", res.data);
+        setServices(Array.isArray(res.data.data) ? res.data.data : []);
         setLoading(false);
       })
       .catch(err => {
