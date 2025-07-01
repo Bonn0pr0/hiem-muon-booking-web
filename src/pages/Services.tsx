@@ -1,138 +1,55 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { treatmentServiceApi } from "@/api/treatmentService";
 
 const Services = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('all');
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const serviceCategories = [
-    { id: 'all', label: 'Tất cả (6)' },
-    { id: 'basic', label: 'Cơ bản (1)' },
-    { id: 'advanced', label: 'Nâng cao (2)' },
-    { id: 'premium', label: 'Cao cấp (1)' },
-    { id: 'support', label: 'Hỗ trợ (2)' }
+    { id: 'all', label: 'Tất cả' },
+    { id: 'basic', label: 'Cơ bản' },
+    { id: 'advanced', label: 'Nâng cao' },
+    { id: 'premium', label: 'Cao cấp' },
+    { id: 'support', label: 'Hỗ trợ' }
   ];
 
-  const services = [
-    {
-      id: 1,
-      category: 'basic',
-      title: 'IUI - Thu tinh trong tử cung',
-      description: 'Phương pháp hỗ trợ sinh sản đơn giản, phù hợp với các trường hợp vô sinh nhẹ.',
-      duration: '2-3 tuần',
-      successRate: '15-20%',
-      features: [
-        'Theo dõi rụng trứng',
-        'Xử lý tinh trùng',
-        'Thu tinh trong tử cung',
-        'Theo dõi sau thủ thuật'
-      ],
-      priceRange: '15.000.000 - 25.000.000',
-      currency: 'VNĐ',
-      badge: 'Cơ bản',
-      badgeColor: 'bg-blue-100 text-blue-800'
-    },
-    {
-      id: 2,
-      category: 'advanced',
-      title: 'IVF - Thu tinh ống nghiệm cơ bản',
-      description: 'Thu tinh ngoài cơ thể với công nghệ tiên tiến, phù hợp với nhiều trường hợp vô sinh.',
-      duration: '4-6 tuần',
-      successRate: '40-50%',
-      features: [
-        'Kích thích buồng trứng',
-        'Lấy trứng',
-        'Thu tinh trong phòng thí nghiệm',
-        'Nuôi cấy phôi',
-        'Chuyển phôi vào tử cung'
-      ],
-      priceRange: '80.000.000 - 120.000.000',
-      currency: 'VNĐ',
-      badge: 'Nâng cao',
-      badgeColor: 'bg-purple-100 text-purple-800'
-    },
-    {
-      id: 3,
-      category: 'advanced',
-      title: 'ICSI - Tiêm tinh trùng vào bào tương trứng',
-      description: 'Công nghệ IVF kết hợp ICSI, phù hợp với vô sinh nam và trường hợp khó.',
-      duration: '4-6 tuần',
-      successRate: '45-55%',
-      features: [
-        'Tất cả quy trình IVF',
-        'Tiêm tinh trùng trực tiếp',
-        'Tăng tỷ lệ thu tinh',
-        'Phù hợp vô sinh nam'
-      ],
-      priceRange: '100.000.000 - 150.000.000',
-      currency: 'VNĐ',
-      badge: 'Nâng cao',
-      badgeColor: 'bg-purple-100 text-purple-800'
-    },
-    {
-      id: 4,
-      category: 'premium',
-      title: 'PGT-A - Chẩn đoán di truyền tiền làm tổ',
-      description: 'IVF kết hợp xét nghiệm di truyền phôi, đảm bảo phôi khỏe mạnh.',
-      duration: '6-8 tuần',
-      successRate: '60-70%',
-      features: [
-        'Tất cả quy trình IVF/ICSI',
-        'Sinh thiết phôi',
-        'Xét nghiệm di truyền',
-        'Chọn phôi khỏe mạnh',
-        'Tỷ lệ thành công cao'
-      ],
-      priceRange: 'Thương lượng',
-      currency: '',
-      badge: 'Cao cấp',
-      badgeColor: 'bg-yellow-100 text-yellow-800'
-    },
-    {
-      id: 5,
-      category: 'support',
-      title: 'Đông lạnh phôi/trứng',
-      description: 'Bảo quản phôi hoặc trứng để sử dụng trong tương lai.',
-      duration: '1 ngày',
-      successRate: '90%+',
-      features: [
-        'Công nghệ đông lạnh hiện đại',
-        'Bảo quản dài hạn',
-        'Tỷ lệ sống cao',
-        'Linh hoạt thời gian'
-      ],
-      priceRange: '5.000.000 - 10.000.000',
-      currency: 'VNĐ',
-      badge: 'Hỗ trợ',
-      badgeColor: 'bg-green-100 text-green-800'
-    },
-    {
-      id: 6,
-      category: 'support',
-      title: 'Tư vấn và khám sàng lọc',
-      description: 'Khám và tư vấn toàn diện về tình trạng sinh sản.',
-      duration: '1-2 giờ',
-      successRate: '100%',
-      features: [
-        'Khám tổng quát',
-        'Xét nghiệm cơ bản',
-        'Tư vấn chuyên sâu',
-        'Lập kế hoạch điều trị'
-      ],
-      priceRange: '500.000 - 2.000.000',
-      currency: 'VNĐ',
-      badge: 'Hỗ trợ',
-      badgeColor: 'bg-green-100 text-green-800'
+  useEffect(() => {
+    setLoading(true);
+    treatmentServiceApi.getAll()
+      .then(res => {
+        setServices(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Không thể tải danh sách dịch vụ");
+        setLoading(false);
+      });
+  }, []);
+
+  // Mapping category nếu backend trả về tiếng Anh
+  const getBadgeColor = (category: string) => {
+    switch (category) {
+      case 'basic': return 'bg-blue-100 text-blue-800';
+      case 'advanced': return 'bg-purple-100 text-purple-800';
+      case 'premium': return 'bg-yellow-100 text-yellow-800';
+      case 'support': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  ];
+  };
 
-  const filteredServices = activeFilter === 'all' 
-    ? services 
+  const filteredServices = activeFilter === 'all'
+    ? services
     : services.filter(service => service.category === activeFilter);
+
+  if (loading) return <div className="text-center py-8">Đang tải...</div>;
+  if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
   return (
     <div className="min-h-screen bg-secondary/10">
@@ -161,14 +78,14 @@ const Services = () => {
         {/* Services Grid */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {filteredServices.map((service) => (
-            <Card key={service.id} className="hover:shadow-lg transition-shadow">
+            <Card key={service.id || service.service_id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
-                  <Badge className={service.badgeColor}>
-                    {service.badge}
+                  <Badge className={getBadgeColor(service.category)}>
+                    {service.badge || service.category}
                   </Badge>
                 </div>
-                <CardTitle className="text-xl">{service.title}</CardTitle>
+                <CardTitle className="text-xl">{service.title || service.name}</CardTitle>
                 <CardDescription>{service.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -186,7 +103,7 @@ const Services = () => {
                 <div>
                   <h4 className="font-semibold mb-2">Quy trình bao gồm:</h4>
                   <ul className="space-y-1">
-                    {service.features.map((feature, index) => (
+                    {(service.features || []).map((feature: string, index: number) => (
                       <li key={index} className="flex items-center text-sm">
                         <span className="text-green-500 mr-2">✓</span>
                         {feature}
