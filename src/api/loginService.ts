@@ -11,7 +11,7 @@ export interface LoginResponse {
     id: number;
     email: string;
     name: string;
-    role?: string;
+    role: string;
   };
 }
 
@@ -28,12 +28,12 @@ class LoginService {
    * @param credentials - Thông tin đăng nhập
    * @returns Promise với thông tin đăng nhập thành công
    */
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
+  async login(credentials: LoginRequest): Promise<{ accessToken: string; user: { id: number; email: string; name: string; role: string; } }> {
     try {
       console.log('LoginService: Gửi request đến:', this.LOGIN_ENDPOINT);
       console.log('LoginService: Credentials:', credentials);
       
-      const response = await api.post<LoginResponse>(this.LOGIN_ENDPOINT, credentials);
+      const response = await api.post(this.LOGIN_ENDPOINT, credentials);
       
       console.log('LoginService: Response thành công:', response.data);
       
@@ -42,7 +42,7 @@ class LoginService {
         localStorage.setItem('accessToken', response.data.accessToken);
       }
       
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
       console.error('LoginService: Lỗi chi tiết:', error);
       console.error('LoginService: Response error:', error.response?.data);

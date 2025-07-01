@@ -32,27 +32,27 @@ const App = () => {
         <Toaster />
         <Sonner />
         <AuthProvider>
-        <BrowserRouter>
+          <BrowserRouter>
             <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
+            <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/booking" element={<Booking />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/customer" element={<CustomerPage />} />
-            <Route path="/dashboard/user" element={<UserDashboard />} />
-            <Route path="/dashboard/staff" element={<StaffDashboard />} />
-            <Route path="/dashboard/manager" element={<ManagerDashboard />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/booking" element={<Booking />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/customer" element={<CustomerPage />} />
+              <Route path="/dashboard/user" element={<UserDashboard />} />
+              <Route path="/dashboard/staff" element={<StaffDashboard />} />
+              <Route path="/dashboard/manager" element={<ManagerDashboard />} />
               <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
               <Route path="/dashboard/admin" element={<AdminDashboard />} />
-            <Route path="/update-profile" element={<UpdateProfile />} />
-            <Route path="/treatment-history" element={<TreatmentHistory />} />
-            <Route path="/online-consultation" element={<OnlineConsultation />} />
-            <Route path="/payment" element={<Payment />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              <Route path="/update-profile" element={<UpdateProfile />} />
+              <Route path="/treatment-history" element={<TreatmentHistory />} />
+              <Route path="/online-consultation" element={<OnlineConsultation />} />
+              <Route path="/payment" element={<Payment />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

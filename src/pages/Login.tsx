@@ -14,7 +14,7 @@ type LoginResponse = {
     id: number;
     email: string;
     name: string;
-    role?: string;
+    role: string;
   };
 };
 
@@ -34,21 +34,21 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      console.log('Đang gửi request login với:', formData);
       const response = await loginService.login(formData);
-      console.log('Response từ API:', response);
-      const { accessToken, user } = response as LoginResponse;
+      const { accessToken, user } = response;
+      console.log('User object sau login:', user);
+      console.log('Role của user:', user?.role);
       localStorage.setItem('accessToken', accessToken);
       if (user) {
-        login(user); // cập nhật context
-        // localStorage.setItem('user', JSON.stringify(user));
+        login(user);
+        await new Promise(res => setTimeout(res, 100));
       }
       let role: string = user?.role || 'user';
       console.log('Role của user:', role);
-      if (role === 'admin') navigate('/dashboard/admin');
-      else if (role === 'manager') navigate('/dashboard/manager');
-      else if (role === 'staff') navigate('/dashboard/staff');
-      else if (role === 'doctor') navigate('/dashboard/doctor');
+      if (role === 'Admin') navigate('/dashboard/admin');
+      else if (role === 'Manager') navigate('/dashboard/manager');
+      else if (role === 'Staff') navigate('/dashboard/staff');
+      else if (role === 'Doctor') navigate('/dashboard/doctor');
       else navigate('/dashboard/user');
     } catch (error: any) {
       console.error('Lỗi login:', error);

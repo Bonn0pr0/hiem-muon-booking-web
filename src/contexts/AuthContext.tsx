@@ -4,7 +4,7 @@ type User = {
   id: number;
   name: string;
   email: string;
-  role?: string;
+  role: string;
 } | null;
 
 type AuthContextType = {
@@ -16,20 +16,19 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      console.log('AuthContext: Loading user from localStorage:', userStr);
-      setUser(JSON.parse(userStr));
-    }
+    const storedUser = localStorage.getItem('user');
+    console.log('AuthProvider useEffect, storedUser:', storedUser);
+    if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  const login = (user: User) => {
-    console.log('AuthContext: Login user:', user);
-    setUser(user);
-    localStorage.setItem("user", JSON.stringify(user));
+  const login = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    console.log('AuthContext login: userData', userData);
+    console.log('AuthContext login: localStorage user', localStorage.getItem('user'));
   };
 
   const logout = () => {
