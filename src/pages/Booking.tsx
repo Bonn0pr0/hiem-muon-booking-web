@@ -12,6 +12,7 @@ import { vi } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { bookingApi } from "@/api/bookingService";
 
 const Booking = () => {
   const { toast } = useToast();
@@ -47,7 +48,7 @@ const Booking = () => {
     '13:00', '14:00', '15:00', '16:00', '17:00'
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedDate || !formData.name || !formData.phone || !formData.doctor || !formData.service || !formData.time) {
@@ -59,22 +60,40 @@ const Booking = () => {
       return;
     }
 
-    toast({
-      title: "Đặt lịch thành công",
-      description: `Đã đặt lịch khám ngày ${format(selectedDate, 'dd/MM/yyyy', { locale: vi })} lúc ${formData.time}`,
-    });
+    // Chuẩn bị dữ liệu gửi lên API
+    const payload = {
+      customer: formData.name,
+      doctor: doctors.find(d => d.id === formData.doctor)?.name || "",
+      service: formData.service,
+      date: format(selectedDate, "yyyy-MM-dd"),
+      time: formData.time,
+      notes: formData.notes
+    };
 
-    // Reset form
-    setFormData({
-      name: '',
-      phone: '',
-      email: '',
-      doctor: '',
-      service: '',
-      time: '',
-      notes: ''
-    });
-    setSelectedDate(undefined);
+    try {
+      await bookingApi.book(payload);
+      toast({
+        title: "Đặt lịch thành công",
+        description: `Đã đặt lịch khám ngày ${format(selectedDate, 'dd/MM/yyyy', { locale: vi })} lúc ${formData.time}`,
+      });
+      // Reset form
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        doctor: '',
+        service: '',
+        time: '',
+        notes: ''
+      });
+      setSelectedDate(undefined);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi đặt lịch",
+        description: error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleChange = (name: string, value: string) => {
