@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "./api"; // Đã cấu hình interceptor
 
 const bookingApi = {
   book: async (payload: {
@@ -8,17 +8,7 @@ const bookingApi = {
     time: string;
     notes?: string;
   }) => {
-    // Lấy token từ localStorage (hoặc nơi bạn lưu)
-    const token = localStorage.getItem("token"); // Đảm bảo key đúng với app của bạn
-    return axios.post(
-      "http://localhost:8080/api/bookings/form",
-      payload,
-      {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        }
-      }
-    );
+    return api.post("/api/bookings/form", payload);
   }
 };
 
