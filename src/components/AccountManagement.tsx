@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,17 +9,28 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
+interface Account {
+  id: number | string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
 const AccountManagement = () => {
   const { toast } = useToast();
-  const [accounts, setAccounts] = useState([
-    { id: 1, name: "Admin", email: "admin@fertilitycare.com", role: "admin", status: "active" },
-    { id: 2, name: "Manager", email: "manager@fertilitycare.com", role: "manager", status: "active" },
-    { id: 3, name: "Staff", email: "staff@fertilitycare.com", role: "staff", status: "active" },
-    { id: 4, name: "BS. Trần Văn Nam", email: "doctor@fertilitycare.com", role: "doctor", status: "active" },
-    { id: 5, name: "Nguyễn Văn A", email: "user@example.com", role: "user", status: "active" }
-  ]);
+  const [accounts, setAccounts] = useState<Account[]>(
+    [
+      { id: 1, name: "Admin", email: "admin@fertilitycare.com", role: "admin", status: "active" },
+      { id: 2, name: "Manager", email: "manager@fertilitycare.com", role: "manager", status: "active" },
+      { id: 3, name: "Staff", email: "staff@fertilitycare.com", role: "staff", status: "active" },
+      { id: 4, name: "BS. Trần Văn Nam", email: "doctor@fertilitycare.com", role: "doctor", status: "active" },
+      { id: 5, name: "Nguyễn Văn A", email: "user@example.com", role: "customer", status: "active" },
+    ]
+  );
 
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     email: '',
     role: '',
@@ -28,6 +38,7 @@ const AccountManagement = () => {
   });
 
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [searchName, setSearchName] = useState("");
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -35,7 +46,7 @@ const AccountManagement = () => {
       case 'manager': return 'bg-purple-100 text-purple-800';
       case 'doctor': return 'bg-blue-100 text-blue-800';
       case 'staff': return 'bg-green-100 text-green-800';
-      case 'user': return 'bg-gray-100 text-gray-800';
+      case 'customer': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -56,7 +67,7 @@ const AccountManagement = () => {
       setEditingId(null);
     } else {
       const newAccount = {
-        id: Date.now(),
+        id: formData.id || Date.now(),
         name: formData.name,
         email: formData.email,
         role: formData.role,
@@ -69,20 +80,21 @@ const AccountManagement = () => {
       });
     }
 
-    setFormData({ name: '', email: '', role: '', password: '' });
+    setFormData({ id: '', name: '', email: '', role: '', password: '' });
   };
 
-  const handleEdit = (account: any) => {
+  const handleEdit = (account: Account) => {
     setFormData({
+      id: account.id.toString(),
       name: account.name,
       email: account.email,
       role: account.role,
       password: ''
     });
-    setEditingId(account.id);
+    setEditingId(typeof account.id === "number" ? account.id : Number(account.id));
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: number | string) => {
     setAccounts(prev => prev.filter(acc => acc.id !== id));
     toast({
       title: "Xóa tài khoản",
@@ -105,26 +117,16 @@ const AccountManagement = () => {
             {/* Form tạo/sửa tài khoản */}
             <Card>
               <CardHeader>
-                <CardTitle>{editingId ? 'Sửa tài khoản' : 'Tạo tài khoản mới'}</CardTitle>
+                <CardTitle>{editingId ? 'Sửa tài khoản' : 'Phân quyền'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Họ và tên</Label>
+                    <Label htmlFor="id">ID</Label>
                     <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      id="id"
+                      value={formData.id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
                       required
                     />
                   </div>
@@ -139,20 +141,9 @@ const AccountManagement = () => {
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="doctor">Doctor</SelectItem>
                         <SelectItem value="staff">Staff</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="customer">Customer</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Mật khẩu</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder={editingId ? "Để trống nếu không đổi mật khẩu" : "Nhập mật khẩu"}
-                      required={!editingId}
-                    />
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit">
@@ -164,7 +155,7 @@ const AccountManagement = () => {
                         variant="outline"
                         onClick={() => {
                           setEditingId(null);
-                          setFormData({ name: '', email: '', role: '', password: '' });
+                          setFormData({id: '', name: '', email: '', role: '', password: '' });
                         }}
                       >
                         Hủy
@@ -178,50 +169,68 @@ const AccountManagement = () => {
             {/* Danh sách tài khoản */}
             <Card>
               <CardHeader>
-                <CardTitle>Danh sách tài khoản</CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle>Danh sách tài khoản</CardTitle>
+                  <Input
+                    className="w-48"
+                    placeholder="Tìm kiếm tên..."
+                    value={searchName}
+                    onChange={e => setSearchName(e.target.value)}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>ID</TableHead>
                       <TableHead>Tên</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Vai trò</TableHead>
                       <TableHead>Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {accounts.map((account) => (
-                      <TableRow key={account.id}>
-                        <TableCell className="font-medium">{account.name}</TableCell>
-                        <TableCell>{account.email}</TableCell>
-                        <TableCell>
-                          <Badge className={getRoleBadgeColor(account.role)}>
-                            {account.role.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(account)}
-                            >
-                              Sửa
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(account.id)}
-                            >
-                              Xóa
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
                 </Table>
+                <div className="max-h-80 overflow-y-auto">
+                  <Table>
+                    <TableBody>
+                      {accounts
+                        .filter(acc =>
+                          acc.name.toLowerCase().includes(searchName.toLowerCase())
+                        )
+                        .map((account) => (
+                          <TableRow key={account.id}>
+                            <TableCell className="font-medium">{account.id}</TableCell>
+                            <TableCell>{account.name}</TableCell>
+                            <TableCell>{account.email}</TableCell>
+                            <TableCell>
+                              <Badge className={getRoleBadgeColor(account.role)}>
+                                {account.role.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEdit(account)}
+                                >
+                                  Sửa
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDelete(account.id)}
+                                >
+                                  Xóa
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>

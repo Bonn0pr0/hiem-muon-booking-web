@@ -114,7 +114,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* System Alerts */}
+        {/* System Alerts
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -137,19 +137,19 @@ const AdminDashboard = () => {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            {/* <TabsTrigger value="overview">Tổng quan</TabsTrigger> */}
             <TabsTrigger value="accounts">Quản lý tài khoản</TabsTrigger>
-            <TabsTrigger value="reports">Báo cáo & Thống kê</TabsTrigger>
+            {/* <TabsTrigger value="reports">Báo cáo & Thống kê</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Quick Actions */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Thao tác nhanh</CardTitle>
                 <CardDescription>
@@ -174,7 +174,7 @@ const AdminDashboard = () => {
                   <span>Sao lưu dữ liệu</span>
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* System Health */}
             <Card>
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Quick Access to Other Dashboards */}
+        {/* Quick Access to Other Dashboards
         <Card className="mt-8">
           <CardHeader>
             <CardTitle>Truy cập nhanh các dashboard khác</CardTitle>
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
               👤 Dashboard User
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
