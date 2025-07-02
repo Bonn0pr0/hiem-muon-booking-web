@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,17 +17,13 @@ interface Account {
   status: string;
 }
 
-const AccountManagement = () => {
+const AccountManagement = ({ users, roles, onDeleteUser, onChangeRole }) => {
   const { toast } = useToast();
-  const [accounts, setAccounts] = useState<Account[]>(
-    [
-      { id: 1, name: "Admin", email: "admin@fertilitycare.com", role: "admin", status: "active" },
-      { id: 2, name: "Manager", email: "manager@fertilitycare.com", role: "manager", status: "active" },
-      { id: 3, name: "Staff", email: "staff@fertilitycare.com", role: "staff", status: "active" },
-      { id: 4, name: "BS. Trần Văn Nam", email: "doctor@fertilitycare.com", role: "doctor", status: "active" },
-      { id: 5, name: "Nguyễn Văn A", email: "user@example.com", role: "customer", status: "active" },
-    ]
-  );
+  const [accounts, setAccounts] = useState<Account[]>(users);
+
+  useEffect(() => {
+    setAccounts(users);
+  }, [users]);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -51,15 +47,12 @@ const AccountManagement = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingId) {
-      setAccounts(prev => prev.map(acc => 
-        acc.id === editingId 
-          ? { ...acc, name: formData.name, email: formData.email, role: formData.role }
-          : acc
-      ));
+      // Gọi API đổi role
+      await onChangeRole(editingId, formData.role);
       toast({
         title: "Cập nhật thành công",
         description: "Tài khoản đã được cập nhật",
@@ -84,22 +77,37 @@ const AccountManagement = () => {
   };
 
   const handleEdit = (account: Account) => {
+    // Tìm roleId từ roleName (nếu account.role là roleName)
+    let roleId = account.role;
+    if (isNaN(Number(roleId))) {
+      // Nếu role là roleName, tìm roleId
+      const found = roles.find(r => r.roleName.toLowerCase() === account.role.toLowerCase());
+      roleId = found ? found.roleId.toString() : "";
+    }
     setFormData({
       id: account.id.toString(),
       name: account.name,
       email: account.email,
-      role: account.role,
+      role: roleId,
       password: ''
     });
     setEditingId(typeof account.id === "number" ? account.id : Number(account.id));
   };
 
   const handleDelete = (id: number | string) => {
-    setAccounts(prev => prev.filter(acc => acc.id !== id));
+    onDeleteUser(id);
     toast({
       title: "Xóa tài khoản",
       description: "Tài khoản đã được xóa",
       variant: "destructive"
+    });
+  };
+
+  const handleChangeRole = async (userId, roleId) => {
+    await onChangeRole(userId, Number(roleId));
+    toast({
+      title: "Đổi vai trò",
+      description: "Vai trò đã được đổi",
     });
   };
 
@@ -132,16 +140,19 @@ const AccountManagement = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Vai trò</Label>
-                    <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                    <Select
+                      value={formData.role}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="doctor">Doctor</SelectItem>
-                        <SelectItem value="staff">Staff</SelectItem>
-                        <SelectItem value="customer">Customer</SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.roleId} value={role.roleId.toString()}>
+                            {role.roleName.toUpperCase()}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -205,7 +216,9 @@ const AccountManagement = () => {
                             <TableCell>{account.email}</TableCell>
                             <TableCell>
                               <Badge className={getRoleBadgeColor(account.role)}>
-                                {account.role.toUpperCase()}
+                                {
+                                  (roles.find(r => r.roleId.toString() === account.role.toString())?.roleName || account.role).toUpperCase()
+                                }
                               </Badge>
                             </TableCell>
                             <TableCell>

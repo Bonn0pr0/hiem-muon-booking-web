@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +7,13 @@ import { UserIcon, CalendarIcon, FileIcon, TrendingUpIcon, ShieldIcon, SettingsI
 import { useNavigate } from "react-router-dom";
 import AccountManagement from "@/components/AccountManagement";
 import SystemReports from "@/components/SystemReports";
+import { getAllUsers, getAllRoles, changeUserRole, deleteUser } from "@/api/adminApi";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
 
   const stats = [
     {
@@ -83,6 +86,27 @@ const AdminDashboard = () => {
       case 'error': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  useEffect(() => {
+    // Lấy danh sách user
+    getAllUsers().then(res => setUsers(res.data.data || []));
+    // Lấy danh sách role
+    getAllRoles().then(res => setRoles(res.data.data || []));
+  }, []);
+
+  const handleDeleteUser = async (userId: number) => {
+    await deleteUser(userId);
+    // Sau khi xóa, reload lại danh sách user
+    const res = await getAllUsers();
+    setUsers(res.data.data || []);
+  };
+
+  const handleChangeRole = async (userId: number, roleId: number) => {
+    await changeUserRole(userId, roleId);
+    // Sau khi đổi role, reload lại danh sách user
+    const res = await getAllUsers();
+    setUsers(res.data.data || []);
   };
 
   return (
@@ -203,7 +227,12 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="accounts">
-            <AccountManagement />
+            <AccountManagement
+              users={users}
+              roles={roles}
+              onDeleteUser={handleDeleteUser}
+              onChangeRole={handleChangeRole}
+            />
           </TabsContent>
 
           <TabsContent value="reports">
