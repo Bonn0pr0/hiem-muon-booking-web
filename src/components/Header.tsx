@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,17 @@ const Header = () => {
       description: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Hẹn gặp lại!",
     });
     navigate('/');
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -64,8 +76,18 @@ const Header = () => {
             >
               Dịch vụ
             </button>
-            <span className="text-sm font-medium text-muted-foreground">Về chúng tôi</span>
-            <span className="text-sm font-medium text-muted-foreground">Liên hệ</span>
+            <button
+              onClick={() => scrollToSection('about-us')}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Về chúng tôi
+            </button>
+            <button
+              onClick={() => scrollToSection('contact')}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Liên hệ
+            </button>
           </nav>
 
           <div className="flex items-center space-x-4">
