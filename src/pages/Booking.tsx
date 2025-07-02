@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input"; // Xóa nếu không dùng
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,46 +12,92 @@ import { vi } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { bookingApi } from "@/api/bookingService";
+import { treatmentServiceApi } from "@/api/treatmentService";
+import { doctorServiceApi } from "@/api/doctorService";
+import { bookingApi } from "@/api/bookingApi";
+
+// Khai báo các khung giờ hẹn
+const timeSlots = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "13:00", "13:30", "14:00",
+  "14:30", "15:00", "15:30", "16:00", "16:30"
+];
 
 const Booking = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
     doctor: '',
     service: '',
     time: '',
     notes: ''
   });
 
-  const doctors = [
-    { id: 'dr1', name: 'BS. Trần Văn Nam', specialty: 'Chuyên khoa Sản Phụ khoa' },
-    { id: 'dr2', name: 'BS. Nguyễn Thị Mai', specialty: 'Chuyên khoa Hiếm muộn' },
-    { id: 'dr3', name: 'BS. Lê Minh Hoàng', specialty: 'Chuyên khoa IVF' },
-    { id: 'dr4', name: 'BS. Phạm Thị Lan', specialty: 'Chuyên khoa Nội tiết' }
-  ];
+  // State cho danh sách bác sĩ và dịch vụ
+  const [doctors, setDoctors] = useState<{ id: string, name: string, specialty?: string }[]>([]);
+  const [services, setServices] = useState<{ id: string, name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const services = [
-    'IUI - Thu tinh trong tử cung',
-    'IVF - Thu tinh ống nghiệm cơ bản',
-    'ICSI - Tiêm tinh trùng vào bào tương trứng',
-    'PGT-A - Chẩn đoán di truyền tiền làm tổ',
-    'Tư vần và khám sàng lọc',
-    'Đông lạnh phôi/trứng'
-  ];
-
-  const timeSlots = [
-    '07:00', '08:00', '09:00', '10:00', '11:00',
-    '13:00', '14:00', '15:00', '16:00', '17:00'
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const doctorRes = await doctorServiceApi.getAll();
+        // Thử log cả doctorRes để kiểm tra cấu trúc thực tế
+        console.log("doctorRes", doctorRes);
+        // Nếu không có data hoặc data không phải mảng, trả về mảng rỗng
+        const doctorArr =
+          Array.isArray(doctorRes?.data?.data)
+            ? doctorRes.data.data
+            : Array.isArray(doctorRes?.data)
+              ? doctorRes.data
+              : [];
+        setDoctors(
+          doctorArr.map((d: any, idx: number) =>
+            typeof d === "string"
+              ? { id: idx.toString(), name: d, specialty: undefined }
+              : {
+                  id: d.id?.toString() ?? idx.toString(),
+                  name: d.name ?? d.fullName ?? "",
+                  specialty: d.specialty ?? undefined
+                }
+          )
+        );
+        const serviceRes = await treatmentServiceApi.getAll();
+        console.log("serviceRes", serviceRes.data);
+        setServices(
+          // Nếu serviceRes.data.data là mảng object dịch vụ, dùng trực tiếp:
+          Array.isArray(serviceRes.data?.data)
+            ? serviceRes.data.data.map((s: any, idx: number) => ({
+                id: s.id?.toString() ?? idx.toString(),
+                name: s.name ?? s.title ?? ""
+              }))
+            // Nếu là mảng string (tên), fallback:
+            : Array.isArray(serviceRes.data)
+              ? serviceRes.data.map((name: string, idx: number) => ({
+                  id: idx.toString(),
+                  name
+                }))
+              : []
+        );
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error?.message || "Không thể tải danh sách bác sĩ hoặc dịch vụ.",
+          variant: "destructive"
+        });
+        console.error("API error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !formData.name || !formData.phone || !formData.doctor || !formData.service || !formData.time) {
+    if (!selectedDate || !formData.doctor || !formData.service || !formData.time) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -62,7 +108,6 @@ const Booking = () => {
 
     // Chuẩn bị dữ liệu gửi lên API
     const payload = {
-      customer: formData.name,
       doctor: doctors.find(d => d.id === formData.doctor)?.name || "",
       service: formData.service,
       date: format(selectedDate, "yyyy-MM-dd"),
@@ -78,9 +123,6 @@ const Booking = () => {
       });
       // Reset form
       setFormData({
-        name: '',
-        phone: '',
-        email: '',
         doctor: '',
         service: '',
         time: '',
@@ -99,6 +141,8 @@ const Booking = () => {
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  if (loading) return <div className="text-center py-10">Đang tải dữ liệu...</div>;
 
   return (
     <div className="min-h-screen bg-secondary/10 py-8">
@@ -126,43 +170,7 @@ const Booking = () => {
                 {/* Personal Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold flex items-center space-x-2">
-                    <span>👤</span>
-                    <span>Thông tin cá nhân</span>
                   </h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Họ và tên *</Label>
-                      <Input
-                        id="name"
-                        placeholder="Nhập họ và tên"
-                        value={formData.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Số điện thoại *</Label>
-                      <Input
-                        id="phone"
-                        placeholder="Nhập số điện thoại"
-                        value={formData.phone}
-                        onChange={(e) => handleChange('phone', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Nhập email (không bắt buộc)"
-                      value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                    />
-                  </div>
                 </div>
 
                 {/* Appointment Information */}
@@ -174,7 +182,7 @@ const Booking = () => {
                   
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Ngày hẹn *</Label>
+                      <Label htmlFor="date">Ngày hẹn *</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -193,7 +201,13 @@ const Booking = () => {
                             mode="single"
                             selected={selectedDate}
                             onSelect={setSelectedDate}
-                            disabled={(date) => date < new Date()}
+                            // Sửa so sánh ngày: loại bỏ giờ phút giây
+                            disabled={(date) => {
+                              const today = new Date();
+                              today.setHours(0,0,0,0);
+                              date.setHours(0,0,0,0);
+                              return date < today;
+                            }}
                             initialFocus
                             className="pointer-events-auto"
                           />
@@ -225,11 +239,16 @@ const Booking = () => {
                         <SelectValue placeholder="Chọn bác sĩ" />
                       </SelectTrigger>
                       <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name} - {doctor.specialty}
-                          </SelectItem>
-                        ))}
+                        {doctors.length === 0 ? (
+                          <div className="px-4 py-2 text-muted-foreground">Không có bác sĩ</div>
+                        ) : (
+                          doctors.map((doctor) => (
+                            <SelectItem key={doctor.id} value={doctor.id}>
+                              {doctor.name}
+                              {doctor.specialty ? ` - ${doctor.specialty}` : ""}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -241,11 +260,15 @@ const Booking = () => {
                         <SelectValue placeholder="Chọn dịch vụ" />
                       </SelectTrigger>
                       <SelectContent>
-                        {services.map((service) => (
-                          <SelectItem key={service} value={service}>
-                            {service}
-                          </SelectItem>
-                        ))}
+                        {services.length === 0 ? (
+                          <div className="px-4 py-2 text-muted-foreground">Không có dịch vụ</div>
+                        ) : (
+                          services.map((service) => (
+                            <SelectItem key={service.id} value={service.name}>
+                              {service.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
