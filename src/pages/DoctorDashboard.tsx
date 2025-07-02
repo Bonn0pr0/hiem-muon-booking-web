@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,17 +23,18 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { authService } from "@/api/authService";
+import { workScheduleApi } from "@/api/workScheduleApi";
+import { format, parseISO } from "date-fns";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const doctorInfo = {
-    name: "BS. Trần Văn Nam",
-    specialty: "Chuyên khoa Sản phụ khoa",
-    department: "Khoa Hỗ trợ sinh sản",
-  };
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [doctorInfo, setDoctorInfo] = useState<any>(null);
 
   const patients = [
     {
@@ -121,13 +122,35 @@ const DoctorDashboard = () => {
     // Ở đây sẽ gọi API để cập nhật thông tin
   };
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const userRes = await authService.getCurrentUser();
+        const user = userRes?.data || userRes;
+        setDoctorInfo(user);
+        const doctorId = user.id;
+        if (!doctorId) throw new Error("Không tìm thấy id bác sĩ");
+        const res = await workScheduleApi.getByDoctor(doctorId);
+        setSchedules(res.data?.data || []);
+      } catch (err) {
+        setError("Không thể lấy lịch làm việc.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSchedule();
+  }, []);
+
+  if (loading) return <div>Đang tải lịch làm việc...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className="min-h-screen bg-secondary/10">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard Bác sĩ</h1>
           <p className="text-muted-foreground">
-            Chào mừng {doctorInfo.name} - {doctorInfo.specialty}
+            Chào mừng {doctorInfo?.name}
           </p>
         </div>
 
@@ -326,35 +349,42 @@ const DoctorDashboard = () => {
           <TabsContent value="schedule" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Lịch làm việc hôm nay</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl text-blue-700 font-semibold flex items-center">
+                  <span className="mr-2">🗓️</span> Lịch làm việc hôm nay
+                </CardTitle>
+                <CardDescription className="text-gray-500">
                   Lịch trình khám bệnh và tư vấn trong ngày
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {todaySchedule.map((appointment, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-center">
-                          <p className="font-bold text-lg">{appointment.time}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{appointment.patient}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.room}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          Xem hồ sơ
-                        </Button>
-                        <Button size="sm">
-                          Bắt đầu khám
-                        </Button>
-                      </div>
+                  {schedules.length === 0 ? (
+                    <div className="text-center text-gray-400 py-8">
+                      Không có lịch làm việc nào cho hôm nay.
                     </div>
-                  ))}
+                  ) : (
+                    schedules.map((item: any) => {
+                      const start = format(parseISO(item.startTime), "dd/MM/yyyy HH:mm");
+                      const end = format(parseISO(item.endTime), "dd/MM/yyyy HH:mm");
+                      return (
+                        <div key={item.scheduleId} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-bold text-lg">
+                              {start} - {end}
+                            </p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm">
+                              Xem hồ sơ
+                            </Button>
+                            <Button size="sm" className="bg-pink-500 text-white hover:bg-pink-600">
+                              Bắt đầu khám
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
