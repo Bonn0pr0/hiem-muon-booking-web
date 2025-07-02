@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +34,9 @@ const Header = () => {
     }
   };
 
+  // Lấy role, mặc định là "customer" nếu chưa đăng nhập
+  const role = user?.role?.toLowerCase?.() || "customer";
+
   return (
     <header className="bg-card border-b border-border">
       <div className="container mx-auto px-4">
@@ -51,55 +53,63 @@ const Header = () => {
             </button>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => navigate('/')}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/') ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              Trang chủ
-            </button>
-            <button
-              onClick={() => navigate('/booking')}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/booking') ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              Booking
-            </button>
-            <button
-              onClick={() => navigate('/services')}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive('/services') ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              Dịch vụ
-            </button>
-            <button
-              onClick={() => scrollToSection('about-us')}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              Về chúng tôi
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              Liên hệ
-            </button>
-          </nav>
+          {/* Hiện taskbar nếu chưa đăng nhập hoặc là customer */}
+          {(!user || role === "customer") && (
+            <nav className="hidden md:flex items-center space-x-8">
+              <button
+                onClick={() => navigate('/')}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/') ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                Trang chủ
+              </button>
+              <button
+                onClick={() => navigate('/booking')}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/booking') ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                Booking
+              </button>
+              <button
+                onClick={() => navigate('/services')}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive('/services') ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                Dịch vụ
+              </button>
+              <button
+                onClick={() => scrollToSection('about-us')}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Về chúng tôi
+              </button>
+              <button
+                onClick={() => scrollToSection('contact')}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Liên hệ
+              </button>
+            </nav>
+          )}
 
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/update-profile')}
-                  className="text-sm flex items-center space-x-2"
-                >
-                  <span className="font-semibold">{user.name}</span>
-                </Button>
+                {/* Chỉ hiện tên, không cho click nếu không phải customer */}
+                {role === "customer" ? (
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate('/update-profile')}
+                    className="text-sm flex items-center space-x-2"
+                  >
+                    <span className="font-semibold">{user.name}</span>
+                  </Button>
+                ) : (
+                  <span className="font-semibold text-base px-3">{user.name}</span>
+                )}
                 <Button variant="outline" onClick={handleLogout} size="sm">
                   Đăng xuất
                 </Button>
