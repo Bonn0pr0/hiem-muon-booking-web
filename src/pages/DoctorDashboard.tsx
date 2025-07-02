@@ -26,6 +26,7 @@ import { Search } from "lucide-react";
 import { authService } from "@/api/authService";
 import { workScheduleApi } from "@/api/workScheduleApi";
 import { format, parseISO } from "date-fns";
+import PatientProfile from "@/components/PatientProfile";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [doctorInfo, setDoctorInfo] = useState<any>(null);
+  const [showPatientProfile, setShowPatientProfile] = useState(false);
 
   const patients = [
     {
@@ -120,6 +122,11 @@ const DoctorDashboard = () => {
   const handleUpdateTreatment = (patientId: number, updates: any) => {
     console.log('Cập nhật điều trị cho bệnh nhân:', patientId, updates);
     // Ở đây sẽ gọi API để cập nhật thông tin
+  };
+
+  const handleViewProfile = (patient: any) => {
+    setSelectedPatient(patient);
+    setShowPatientProfile(true);
   };
 
   useEffect(() => {
@@ -334,7 +341,11 @@ const DoctorDashboard = () => {
                             </DialogContent>
                           </Dialog>
 
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewProfile(patient)}
+                          >
                             Xem hồ sơ
                           </Button>
                         </div>
@@ -460,6 +471,13 @@ const DoctorDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Patient Profile Modal */}
+        <PatientProfile 
+          patient={selectedPatient}
+          isOpen={showPatientProfile}
+          onClose={() => setShowPatientProfile(false)}
+        />
       </div>
     </div>
   );
