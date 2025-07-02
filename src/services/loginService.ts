@@ -1,3 +1,4 @@
+
 import axios from "axios";
 
 const bookingApi = {
@@ -8,8 +9,8 @@ const bookingApi = {
     time: string;
     notes?: string;
   }) => {
-    // Lấy token từ localStorage (hoặc nơi bạn lưu)
-    const token = localStorage.getItem("token"); // Đảm bảo key đúng với app của bạn
+    // Lấy token từ localStorage
+    const token = localStorage.getItem("token");
     return axios.post(
       "http://localhost:8080/api/bookings/form",
       payload,
@@ -24,6 +25,7 @@ const bookingApi = {
 
 export { bookingApi };
 
-// Sau khi nhận response từ API login:
-const token = response.data.token; // Đảm bảo lấy đúng trường token từ response
-localStorage.setItem("token", token);
+// Helper function for storing token after login
+export const storeToken = (token: string) => {
+  localStorage.setItem("token", token);
+};
