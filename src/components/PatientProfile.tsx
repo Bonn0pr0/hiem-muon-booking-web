@@ -15,9 +15,10 @@ interface PatientProfileProps {
   patient: any;
   isOpen: boolean;
   onClose: () => void;
+  isReadOnly?: boolean;
 }
 
-const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
+const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: PatientProfileProps) => {
   if (!patient) return null;
 
   const [editingTest, setEditingTest] = useState<number | null>(null);
@@ -27,6 +28,7 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
   const [showAddTest, setShowAddTest] = useState(false);
   const [showAddPrescription, setShowAddPrescription] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
+  const [showAddTreatment, setShowAddTreatment] = useState(false);
 
   // State for form data
   const [testResults, setTestResults] = useState([
@@ -53,27 +55,6 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
       result: "Số nang noãn: 12",
       status: "Tốt",
       range: "6-20"
-    }
-  ]);
-
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 1,
-      date: "2024-06-15",
-      medicine: "Clomiphene Citrate",
-      dosage: "50mg",
-      frequency: "Ngày 1 viên",
-      duration: "5 ngày",
-      instructions: "Uống từ ngày thứ 3-7 của chu kỳ kinh"
-    },
-    {
-      id: 2,
-      date: "2024-06-10",
-      medicine: "Folic Acid",
-      dosage: "5mg",
-      frequency: "Ngày 1 viên",
-      duration: "30 ngày",
-      instructions: "Uống sau ăn"
     }
   ]);
 
@@ -138,6 +119,27 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
     }
   ]);
 
+  const [prescriptions, setPrescriptions] = useState([
+    {
+      id: 1,
+      date: "2024-06-15",
+      medicine: "Clomiphene Citrate",
+      dosage: "50mg",
+      frequency: "Ngày 1 viên",
+      duration: "5 ngày",
+      instructions: "Uống từ ngày thứ 3-7 của chu kỳ kinh"
+    },
+    {
+      id: 2,
+      date: "2024-06-10",
+      medicine: "Folic Acid",
+      dosage: "5mg",
+      frequency: "Ngày 1 viên",
+      duration: "30 ngày",
+      instructions: "Uống sau ăn"
+    }
+  ]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Hoàn thành':
@@ -192,13 +194,19 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
     setShowAddExam(false);
   };
 
+  const handleAddTreatment = (newTreatment: any) => {
+    const id = Math.max(...treatmentPlan.map(t => t.id)) + 1;
+    setTreatmentPlan(prev => [...prev, { ...newTreatment, id }]);
+    setShowAddTreatment(false);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Hồ sơ bệnh nhân - {patient.name}</DialogTitle>
           <DialogDescription>
-            Thông tin chi tiết về quá trình điều trị và kết quả khám bệnh
+            {isReadOnly ? "Xem thông tin chi tiết về quá trình điều trị và kết quả khám bệnh" : "Thông tin chi tiết về quá trình điều trị và kết quả khám bệnh"}
           </DialogDescription>
         </DialogHeader>
 
@@ -206,9 +214,9 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
           <Tabs defaultValue="tests" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="tests">Xét nghiệm</TabsTrigger>
-              <TabsTrigger value="prescriptions">Đơn thuốc</TabsTrigger>
               <TabsTrigger value="examinations">Kết quả khám</TabsTrigger>
               <TabsTrigger value="treatment">Liệu trình</TabsTrigger>
+              <TabsTrigger value="prescriptions">Đơn thuốc</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tests" className="space-y-4">
@@ -219,56 +227,25 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
                       <CardTitle>Kết quả xét nghiệm</CardTitle>
                       <CardDescription>Danh sách các xét nghiệm và kết quả</CardDescription>
                     </div>
-                    <Button onClick={() => setShowAddTest(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm xét nghiệm
-                    </Button>
+                    {!isReadOnly && (
+                      <Button onClick={() => setShowAddTest(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm xét nghiệm
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {showAddTest && (
+                    {!isReadOnly && showAddTest && (
                       <AddTestForm onSave={handleAddTest} onCancel={() => setShowAddTest(false)} />
                     )}
                     {testResults.map((test) => (
                       <div key={test.id} className="border rounded-lg p-4">
-                        {editingTest === test.id ? (
+                        {!isReadOnly && editingTest === test.id ? (
                           <EditTestForm test={test} onSave={handleSaveTest} onCancel={() => setEditingTest(null)} />
                         ) : (
-                          <TestDisplay test={test} onEdit={() => setEditingTest(test.id)} getStatusColor={getStatusColor} />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="prescriptions" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>Đơn thuốc</CardTitle>
-                      <CardDescription>Danh sách thuốc đã kê và hướng dẫn sử dụng</CardDescription>
-                    </div>
-                    <Button onClick={() => setShowAddPrescription(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm đơn thuốc
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {showAddPrescription && (
-                      <AddPrescriptionForm onSave={handleAddPrescription} onCancel={() => setShowAddPrescription(false)} />
-                    )}
-                    {prescriptions.map((prescription) => (
-                      <div key={prescription.id} className="border rounded-lg p-4">
-                        {editingPrescription === prescription.id ? (
-                          <EditPrescriptionForm prescription={prescription} onSave={handleSavePrescription} onCancel={() => setEditingPrescription(null)} />
-                        ) : (
-                          <PrescriptionDisplay prescription={prescription} onEdit={() => setEditingPrescription(prescription.id)} />
+                          <TestDisplay test={test} onEdit={!isReadOnly ? () => setEditingTest(test.id) : undefined} getStatusColor={getStatusColor} isReadOnly={isReadOnly} />
                         )}
                       </div>
                     ))}
@@ -285,23 +262,25 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
                       <CardTitle>Kết quả khám bệnh</CardTitle>
                       <CardDescription>Các lần khám bệnh và kết quả chẩn đoán</CardDescription>
                     </div>
-                    <Button onClick={() => setShowAddExam(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm kết quả khám
-                    </Button>
+                    {!isReadOnly && (
+                      <Button onClick={() => setShowAddExam(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm kết quả khám
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {showAddExam && (
+                    {!isReadOnly && showAddExam && (
                       <AddExamForm onSave={handleAddExam} onCancel={() => setShowAddExam(false)} />
                     )}
                     {examResults.map((exam) => (
                       <div key={exam.id} className="border rounded-lg p-4">
-                        {editingExam === exam.id ? (
+                        {!isReadOnly && editingExam === exam.id ? (
                           <EditExamForm exam={exam} onSave={handleSaveExam} onCancel={() => setEditingExam(null)} />
                         ) : (
-                          <ExamDisplay exam={exam} onEdit={() => setEditingExam(exam.id)} />
+                          <ExamDisplay exam={exam} onEdit={!isReadOnly ? () => setEditingExam(exam.id) : undefined} isReadOnly={isReadOnly} />
                         )}
                       </div>
                     ))}
@@ -313,17 +292,65 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
             <TabsContent value="treatment" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Liệu trình điều trị</CardTitle>
-                  <CardDescription>Kế hoạch điều trị chi tiết theo từng giai đoạn</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Liệu trình điều trị</CardTitle>
+                      <CardDescription>Kế hoạch điều trị chi tiết theo từng giai đoạn</CardDescription>
+                    </div>
+                    {!isReadOnly && (
+                      <Button onClick={() => setShowAddTreatment(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm giai đoạn
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
+                    {!isReadOnly && showAddTreatment && (
+                      <AddTreatmentForm onSave={handleAddTreatment} onCancel={() => setShowAddTreatment(false)} />
+                    )}
                     {treatmentPlan.map((phase) => (
                       <div key={phase.id} className="border rounded-lg p-4">
-                        {editingTreatment === phase.id ? (
+                        {!isReadOnly && editingTreatment === phase.id ? (
                           <EditTreatmentForm treatment={phase} onSave={handleSaveTreatment} onCancel={() => setEditingTreatment(null)} />
                         ) : (
-                          <TreatmentDisplay treatment={phase} onEdit={() => setEditingTreatment(phase.id)} getStatusColor={getStatusColor} />
+                          <TreatmentDisplay treatment={phase} onEdit={!isReadOnly ? () => setEditingTreatment(phase.id) : undefined} getStatusColor={getStatusColor} isReadOnly={isReadOnly} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="prescriptions" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Đơn thuốc</CardTitle>
+                      <CardDescription>Danh sách thuốc đã kê và hướng dẫn sử dụng</CardDescription>
+                    </div>
+                    {!isReadOnly && (
+                      <Button onClick={() => setShowAddPrescription(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm đơn thuốc
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {!isReadOnly && showAddPrescription && (
+                      <AddPrescriptionForm onSave={handleAddPrescription} onCancel={() => setShowAddPrescription(false)} />
+                    )}
+                    {prescriptions.map((prescription) => (
+                      <div key={prescription.id} className="border rounded-lg p-4">
+                        {!isReadOnly && editingPrescription === prescription.id ? (
+                          <EditPrescriptionForm prescription={prescription} onSave={handleSavePrescription} onCancel={() => setEditingPrescription(null)} />
+                        ) : (
+                          <PrescriptionDisplay prescription={prescription} onEdit={!isReadOnly ? () => setEditingPrescription(prescription.id) : undefined} isReadOnly={isReadOnly} />
                         )}
                       </div>
                     ))}
@@ -343,7 +370,7 @@ const PatientProfile = ({ patient, isOpen, onClose }: PatientProfileProps) => {
 };
 
 // Component con cho hiển thị xét nghiệm
-const TestDisplay = ({ test, onEdit, getStatusColor }: any) => (
+const TestDisplay = ({ test, onEdit, getStatusColor, isReadOnly }: any) => (
   <>
     <div className="flex justify-between items-start mb-2">
       <div>
@@ -354,9 +381,11 @@ const TestDisplay = ({ test, onEdit, getStatusColor }: any) => (
         <Badge className={getStatusColor(test.status)}>
           {test.status}
         </Badge>
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          <Edit className="h-4 w-4" />
-        </Button>
+        {!isReadOnly && onEdit && (
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
     <div className="grid md:grid-cols-2 gap-4">
@@ -540,17 +569,433 @@ const AddTestForm = ({ onSave, onCancel }: any) => {
   );
 };
 
+// Các component cho kết quả khám
+const ExamDisplay = ({ exam, onEdit, isReadOnly }: any) => (
+  <>
+    <div className="flex justify-between items-start mb-3">
+      <div>
+        <h4 className="font-semibold">{exam.examination}</h4>
+        <p className="text-sm text-muted-foreground">{exam.date} • {exam.doctor}</p>
+      </div>
+      {!isReadOnly && onEdit && (
+        <Button variant="ghost" size="sm" onClick={onEdit}>
+          <Edit className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-medium">Kết quả khám:</p>
+        <p className="text-sm">{exam.findings}</p>
+      </div>
+      <div>
+        <p className="text-sm font-medium">Kết luận:</p>
+        <p className="text-sm">{exam.conclusion}</p>
+      </div>
+    </div>
+  </>
+);
+
+const EditExamForm = ({ exam, onSave, onCancel }: any) => {
+  const [formData, setFormData] = useState(exam);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(exam.id, formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="examination">Loại khám</Label>
+          <Input
+            id="examination"
+            value={formData.examination}
+            onChange={(e) => setFormData({...formData, examination: e.target.value})}
+          />
+        </div>
+        <div>
+          <Label htmlFor="date">Ngày khám</Label>
+          <Input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({...formData, date: e.target.value})}
+          />
+        </div>
+        <div>
+          <Label htmlFor="doctor">Bác sĩ</Label>
+          <Input
+            id="doctor"
+            value={formData.doctor}
+            onChange={(e) => setFormData({...formData, doctor: e.target.value})}
+          />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="findings">Kết quả khám</Label>
+        <Textarea
+          id="findings"
+          value={formData.findings}
+          onChange={(e) => setFormData({...formData, findings: e.target.value})}
+        />
+      </div>
+      <div>
+        <Label htmlFor="conclusion">Kết luận</Label>
+        <Textarea
+          id="conclusion"
+          value={formData.conclusion}
+          onChange={(e) => setFormData({...formData, conclusion: e.target.value})}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm">
+          <Save className="h-4 w-4 mr-2" />
+          Lưu
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+          <X className="h-4 w-4 mr-2" />
+          Hủy
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+const AddExamForm = ({ onSave, onCancel }: any) => {
+  const [formData, setFormData] = useState({
+    examination: '',
+    date: new Date().toISOString().split('T')[0],
+    findings: '',
+    conclusion: '',
+    doctor: 'BS. Trần Văn Nam'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+    setFormData({
+      examination: '',
+      date: new Date().toISOString().split('T')[0],
+      findings: '',
+      conclusion: '',
+      doctor: 'BS. Trần Văn Nam'
+    });
+  };
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50">
+      <h4 className="font-semibold mb-4">Thêm kết quả khám mới</h4>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="new-examination">Loại khám</Label>
+            <Input
+              id="new-examination"
+              value={formData.examination}
+              onChange={(e) => setFormData({...formData, examination: e.target.value})}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="new-date">Ngày khám</Label>
+            <Input
+              id="new-date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({...formData, date: e.target.value})}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="new-doctor">Bác sĩ</Label>
+            <Input
+              id="new-doctor"
+              value={formData.doctor}
+              onChange={(e) => setFormData({...formData, doctor: e.target.value})}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="new-findings">Kết quả khám</Label>
+          <Textarea
+            id="new-findings"
+            value={formData.findings}
+            onChange={(e) => setFormData({...formData, findings: e.target.value})}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="new-conclusion">Kết luận</Label>
+          <Textarea
+            id="new-conclusion"
+            value={formData.conclusion}
+            onChange={(e) => setFormData({...formData, conclusion: e.target.value})}
+            required
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" size="sm">
+            <Save className="h-4 w-4 mr-2" />
+            Lưu
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            <X className="h-4 w-4 mr-2" />
+            Hủy
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Component cho liệu trình điều trị
+const TreatmentDisplay = ({ treatment, onEdit, getStatusColor, isReadOnly }: any) => (
+  <>
+    <div className="flex justify-between items-start mb-3">
+      <div>
+        <h4 className="font-semibold text-lg">{treatment.phase}: {treatment.title}</h4>
+        <p className="text-sm text-muted-foreground">
+          {treatment.startDate} - {treatment.endDate}
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Badge className={getStatusColor(treatment.status)}>
+          {treatment.status}
+        </Badge>
+        {!isReadOnly && onEdit && (
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+    <div>
+      <p className="text-sm font-medium mb-2">Các hoạt động:</p>
+      <ul className="list-disc list-inside space-y-1">
+        {treatment.activities.map((activity: string, index: number) => (
+          <li key={index} className="text-sm text-muted-foreground">
+            {activity}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </>
+);
+
+const EditTreatmentForm = ({ treatment, onSave, onCancel }: any) => {
+  const [formData, setFormData] = useState({
+    ...treatment,
+    activities: treatment.activities.join('\n')
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedData = {
+      ...formData,
+      activities: formData.activities.split('\n').filter(activity => activity.trim() !== '')
+    };
+    onSave(treatment.id, updatedData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="phase">Giai đoạn</Label>
+          <Input
+            id="phase"
+            value={formData.phase}
+            onChange={(e) => setFormData({...formData, phase: e.target.value})}
+          />
+        </div>
+        <div>
+          <Label htmlFor="status">Trạng thái</Label>
+          <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Chưa bắt đầu">Chưa bắt đầu</SelectItem>
+              <SelectItem value="Đang thực hiện">Đang thực hiện</SelectItem>
+              <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="startDate">Ngày bắt đầu</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+          />
+        </div>
+        <div>
+          <Label htmlFor="endDate">Ngày kết thúc</Label>
+          <Input
+            id="endDate"
+            type="date"
+            value={formData.endDate}
+            onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+          />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="title">Tên giai đoạn</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => setFormData({...formData, title: e.target.value})}
+        />
+      </div>
+      <div>
+        <Label htmlFor="activities">Các hoạt động (mỗi dòng một hoạt động)</Label>
+        <Textarea
+          id="activities"
+          value={formData.activities}
+          onChange={(e) => setFormData({...formData, activities: e.target.value})}
+          rows={5}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm">
+          <Save className="h-4 w-4 mr-2" />
+          Lưu
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+          <X className="h-4 w-4 mr-2" />
+          Hủy
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+const AddTreatmentForm = ({ onSave, onCancel }: any) => {
+  const [formData, setFormData] = useState({
+    phase: '',
+    title: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    status: 'Chưa bắt đầu',
+    activities: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newTreatment = {
+      ...formData,
+      activities: formData.activities.split('\n').filter(activity => activity.trim() !== '')
+    };
+    onSave(newTreatment);
+    setFormData({
+      phase: '',
+      title: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      status: 'Chưa bắt đầu',
+      activities: ''
+    });
+  };
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50">
+      <h4 className="font-semibold mb-4">Thêm giai đoạn mới</h4>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="new-phase">Giai đoạn</Label>
+            <Input
+              id="new-phase"
+              value={formData.phase}
+              onChange={(e) => setFormData({...formData, phase: e.target.value})}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="new-status">Trạng thái</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Chưa bắt đầu">Chưa bắt đầu</SelectItem>
+                <SelectItem value="Đang thực hiện">Đang thực hiện</SelectItem>
+                <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="new-startDate">Ngày bắt đầu</Label>
+            <Input
+              id="new-startDate"
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="new-endDate">Ngày kết thúc</Label>
+            <Input
+              id="new-endDate"
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="new-title">Tên giai đoạn</Label>
+          <Input
+            id="new-title"
+            value={formData.title}
+            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="new-activities">Các hoạt động (mỗi dòng một hoạt động)</Label>
+          <Textarea
+            id="new-activities"
+            value={formData.activities}
+            onChange={(e) => setFormData({...formData, activities: e.target.value})}
+            rows={5}
+            required
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" size="sm">
+            <Save className="h-4 w-4 mr-2" />
+            Lưu
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            <X className="h-4 w-4 mr-2" />
+            Hủy
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 // Các component tương tự cho đơn thuốc
-const PrescriptionDisplay = ({ prescription, onEdit }: any) => (
+const PrescriptionDisplay = ({ prescription, onEdit, isReadOnly }: any) => (
   <>
     <div className="flex justify-between items-start mb-3">
       <div>
         <h4 className="font-semibold text-lg">{prescription.medicine}</h4>
         <p className="text-sm text-muted-foreground">{prescription.date}</p>
       </div>
-      <Button variant="ghost" size="sm" onClick={onEdit}>
-        <Edit className="h-4 w-4" />
-      </Button>
+      {!isReadOnly && onEdit && (
+        <Button variant="ghost" size="sm" onClick={onEdit}>
+          <Edit className="h-4 w-4" />
+        </Button>
+      )}
     </div>
     <div className="grid md:grid-cols-3 gap-4">
       <div>
@@ -744,307 +1189,6 @@ const AddPrescriptionForm = ({ onSave, onCancel }: any) => {
         </div>
       </form>
     </div>
-  );
-};
-
-// Các component cho kết quả khám
-const ExamDisplay = ({ exam, onEdit }: any) => (
-  <>
-    <div className="flex justify-between items-start mb-3">
-      <div>
-        <h4 className="font-semibold">{exam.examination}</h4>
-        <p className="text-sm text-muted-foreground">{exam.date} • {exam.doctor}</p>
-      </div>
-      <Button variant="ghost" size="sm" onClick={onEdit}>
-        <Edit className="h-4 w-4" />
-      </Button>
-    </div>
-    <div className="space-y-3">
-      <div>
-        <p className="text-sm font-medium">Kết quả khám:</p>
-        <p className="text-sm">{exam.findings}</p>
-      </div>
-      <div>
-        <p className="text-sm font-medium">Kết luận:</p>
-        <p className="text-sm">{exam.conclusion}</p>
-      </div>
-    </div>
-  </>
-);
-
-const EditExamForm = ({ exam, onSave, onCancel }: any) => {
-  const [formData, setFormData] = useState(exam);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(exam.id, formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="examination">Loại khám</Label>
-          <Input
-            id="examination"
-            value={formData.examination}
-            onChange={(e) => setFormData({...formData, examination: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="date">Ngày khám</Label>
-          <Input
-            id="date"
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({...formData, date: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="doctor">Bác sĩ</Label>
-          <Input
-            id="doctor"
-            value={formData.doctor}
-            onChange={(e) => setFormData({...formData, doctor: e.target.value})}
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="findings">Kết quả khám</Label>
-        <Textarea
-          id="findings"
-          value={formData.findings}
-          onChange={(e) => setFormData({...formData, findings: e.target.value})}
-        />
-      </div>
-      <div>
-        <Label htmlFor="conclusion">Kết luận</Label>
-        <Textarea
-          id="conclusion"
-          value={formData.conclusion}
-          onChange={(e) => setFormData({...formData, conclusion: e.target.value})}
-        />
-      </div>
-      <div className="flex gap-2">
-        <Button type="submit" size="sm">
-          <Save className="h-4 w-4 mr-2" />
-          Lưu
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-          <X className="h-4 w-4 mr-2" />
-          Hủy
-        </Button>
-      </div>
-    </form>
-  );
-};
-
-const AddExamForm = ({ onSave, onCancel }: any) => {
-  const [formData, setFormData] = useState({
-    examination: '',
-    date: new Date().toISOString().split('T')[0],
-    findings: '',
-    conclusion: '',
-    doctor: 'BS. Trần Văn Nam'
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    setFormData({
-      examination: '',
-      date: new Date().toISOString().split('T')[0],
-      findings: '',
-      conclusion: '',
-      doctor: 'BS. Trần Văn Nam'
-    });
-  };
-
-  return (
-    <div className="border rounded-lg p-4 bg-gray-50">
-      <h4 className="font-semibold mb-4">Thêm kết quả khám mới</h4>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="new-examination">Loại khám</Label>
-            <Input
-              id="new-examination"
-              value={formData.examination}
-              onChange={(e) => setFormData({...formData, examination: e.target.value})}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="new-date">Ngày khám</Label>
-            <Input
-              id="new-date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="new-doctor">Bác sĩ</Label>
-            <Input
-              id="new-doctor"
-              value={formData.doctor}
-              onChange={(e) => setFormData({...formData, doctor: e.target.value})}
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="new-findings">Kết quả khám</Label>
-          <Textarea
-            id="new-findings"
-            value={formData.findings}
-            onChange={(e) => setFormData({...formData, findings: e.target.value})}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="new-conclusion">Kết luận</Label>
-          <Textarea
-            id="new-conclusion"
-            value={formData.conclusion}
-            onChange={(e) => setFormData({...formData, conclusion: e.target.value})}
-            required
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button type="submit" size="sm">
-            <Save className="h-4 w-4 mr-2" />
-            Lưu
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            <X className="h-4 w-4 mr-2" />
-            Hủy
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-// Component cho liệu trình điều trị
-const TreatmentDisplay = ({ treatment, onEdit, getStatusColor }: any) => (
-  <>
-    <div className="flex justify-between items-start mb-3">
-      <div>
-        <h4 className="font-semibold text-lg">{treatment.phase}: {treatment.title}</h4>
-        <p className="text-sm text-muted-foreground">
-          {treatment.startDate} - {treatment.endDate}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <Badge className={getStatusColor(treatment.status)}>
-          {treatment.status}
-        </Badge>
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          <Edit className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-    <div>
-      <p className="text-sm font-medium mb-2">Các hoạt động:</p>
-      <ul className="list-disc list-inside space-y-1">
-        {treatment.activities.map((activity: string, index: number) => (
-          <li key={index} className="text-sm text-muted-foreground">
-            {activity}
-          </li>
-        ))}
-      </ul>
-    </div>
-  </>
-);
-
-const EditTreatmentForm = ({ treatment, onSave, onCancel }: any) => {
-  const [formData, setFormData] = useState({
-    ...treatment,
-    activities: treatment.activities.join('\n')
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedData = {
-      ...formData,
-      activities: formData.activities.split('\n').filter(activity => activity.trim() !== '')
-    };
-    onSave(treatment.id, updatedData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="phase">Giai đoạn</Label>
-          <Input
-            id="phase"
-            value={formData.phase}
-            onChange={(e) => setFormData({...formData, phase: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="status">Trạng thái</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Chưa bắt đầu">Chưa bắt đầu</SelectItem>
-              <SelectItem value="Đang thực hiện">Đang thực hiện</SelectItem>
-              <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="startDate">Ngày bắt đầu</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="endDate">Ngày kết thúc</Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={formData.endDate}
-            onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="title">Tên giai đoạn</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({...formData, title: e.target.value})}
-        />
-      </div>
-      <div>
-        <Label htmlFor="activities">Các hoạt động (mỗi dòng một hoạt động)</Label>
-        <Textarea
-          id="activities"
-          value={formData.activities}
-          onChange={(e) => setFormData({...formData, activities: e.target.value})}
-          rows={5}
-        />
-      </div>
-      <div className="flex gap-2">
-        <Button type="submit" size="sm">
-          <Save className="h-4 w-4 mr-2" />
-          Lưu
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-          <X className="h-4 w-4 mr-2" />
-          Hủy
-        </Button>
-      </div>
-    </form>
   );
 };
 

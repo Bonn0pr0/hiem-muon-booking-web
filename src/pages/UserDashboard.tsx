@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -14,10 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import NotificationBell from "@/components/NotificationBell";
+import PatientProfile from "@/components/PatientProfile";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showPatientProfile, setShowPatientProfile] = useState(false);
 
   // Mock user data
   const user = {
@@ -216,20 +217,10 @@ const UserDashboard = () => {
                         className="w-full"
                         onClick={() => {
                           setShowDashboard(false);
-                          navigate('/treatment-history');
+                          setShowPatientProfile(true);
                         }}
                       >
-                        Lịch sử điều trị
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          setShowDashboard(false);
-                          navigate('/online-consultation');
-                        }}
-                      >
-                        Tư vấn trực tuyến
+                        Hồ sơ điều trị
                       </Button>
                       <Button 
                         variant="outline" 
@@ -366,18 +357,10 @@ const UserDashboard = () => {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/treatment-history')}
+              onClick={() => setShowPatientProfile(true)}
               className="h-16"
             >
-              📋<br />Lịch sử điều trị
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => navigate('/online-consultation')}
-              className="h-16"
-            >
-              💬<br />Tư vấn trực tuyến
+              📋<br />Hồ sơ
             </Button>
             <Button 
               variant="outline" 
@@ -462,6 +445,14 @@ const UserDashboard = () => {
           </Button>
         </div>
       </section>
+
+      {/* Patient Profile Modal */}
+      <PatientProfile 
+        patient={user}
+        isOpen={showPatientProfile}
+        onClose={() => setShowPatientProfile(false)}
+        isReadOnly={true}
+      />
     </div>
   );
 };
