@@ -350,10 +350,10 @@ const DoctorDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-blue-700 font-semibold flex items-center">
-                  <span className="mr-2">🗓️</span> Lịch làm việc hôm nay
+                  <span className="mr-2">🗓️</span> Lịch làm việc
                 </CardTitle>
                 <CardDescription className="text-gray-500">
-                  Lịch trình khám bệnh và tư vấn trong ngày
+                  Lịch trình khám bệnh và tư vấn
                 </CardDescription>
               </CardHeader>
               <CardContent>
