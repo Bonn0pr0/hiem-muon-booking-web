@@ -9,7 +9,14 @@ const bookingApi = {
     notes?: string;
   }) => {
     return api.post("/api/bookings/form", payload);
+  },
+  getByCustomerId: async (customerId) => {
+    return api.get(`/api/bookings/${customerId}`);
   }
 };
+
+// Lấy danh sách bệnh nhân theo doctorId
+export const getPatientsByDoctorId = (doctorId: number) =>
+  api.get(`/api/bookings/patients/${doctorId}`);
 
 export { bookingApi };

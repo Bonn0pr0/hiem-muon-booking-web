@@ -1,16 +1,22 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import NotificationBell from "@/components/NotificationBell";
+import PatientProfile from "@/components/PatientProfile";
+import { useState } from "react";
 
 const CustomerPage = () => {
   const navigate = useNavigate();
+  const [showPatientProfile, setShowPatientProfile] = useState(false);
 
   // Mock user data - in real app this would come from auth context
   const user = {
     name: "Nguyễn Thị Mai",
-    membershipLevel: "VIP"
+    membershipLevel: "VIP",
+    email: "mai.nguyen@email.com",
+    phone: "0901234567",
+    memberSince: "2024-01-15"
   };
 
   const services = [
@@ -82,6 +88,23 @@ const CustomerPage = () => {
     }
   ];
 
+  const testResults = [
+    {
+      id: 1,
+      date: "2024-06-10",
+      type: "Xét nghiệm hormone",
+      result: "Bình thường",
+      doctor: "BS. Nguyễn Thị Mai"
+    },
+    {
+      id: 2,
+      date: "2024-05-25",
+      type: "Siêu âm buồng trứng",
+      result: "Tốt",
+      doctor: "BS. Trần Văn Nam"
+    }
+  ];
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'upcoming':
@@ -99,6 +122,10 @@ const CustomerPage = () => {
       <section className="bg-gradient-to-r from-primary/5 to-primary/10 py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <div></div>
+              <NotificationBell />
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
               Chào mừng trở lại, <span className="text-primary">{user.name}</span>!
             </h1>
@@ -124,17 +151,18 @@ const CustomerPage = () => {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/dashboard/user')}
+              onClick={() => setShowPatientProfile(true)}
               className="h-16"
             >
-              👤<br />Dashboard
+              📋<br />Hồ sơ
             </Button>
             <Button 
               variant="outline" 
               size="lg"
+              onClick={() => navigate('/booking')}
               className="h-16"
             >
-              📋<br />Kết quả xét nghiệm
+              📅<br />Xem lịch booking
             </Button>
             <Button 
               variant="outline" 
@@ -186,6 +214,34 @@ const CustomerPage = () => {
                           </Button>
                         )}
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Test Results Section */}
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-4">Kết quả xét nghiệm gần đây</h2>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="grid gap-4">
+              {testResults.map((result) => (
+                <Card key={result.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{result.type}</h3>
+                      <p className="text-muted-foreground mb-1">{result.doctor}</p>
+                      <p className="text-muted-foreground">{result.date}</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Badge className="bg-green-100 text-green-800">{result.result}</Badge>
+                      <Button variant="outline" size="sm">Xem chi tiết</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -266,6 +322,14 @@ const CustomerPage = () => {
           </Button>
         </div>
       </section>
+
+      {/* Patient Profile Modal */}
+      <PatientProfile 
+        patient={user}
+        isOpen={showPatientProfile}
+        onClose={() => setShowPatientProfile(false)}
+        isReadOnly={true}
+      />
     </div>
   );
 };

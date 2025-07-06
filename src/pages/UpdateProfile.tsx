@@ -33,7 +33,7 @@ const UpdateProfile = () => {
       title: "Cập nhật thành công!",
       description: "Thông tin cá nhân đã được cập nhật."
     });
-    navigate('/dashboard/user');
+    navigate('/dashboard/customer');
   };
 
   return (
@@ -42,7 +42,7 @@ const UpdateProfile = () => {
         <div className="mb-8">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/dashboard/user')}
+            onClick={() => navigate('/dashboard/customer')}
             className="mb-4"
           >
             ← Quay lại Dashboard
@@ -129,7 +129,7 @@ const UpdateProfile = () => {
                 <Button 
                   type="button" 
                   variant="outline"
-                  onClick={() => navigate('/dashboard/user')}
+                  onClick={() => navigate('/dashboard/customer')}
                 >
                   Hủy
                 </Button>

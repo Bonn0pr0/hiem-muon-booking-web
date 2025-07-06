@@ -49,7 +49,7 @@ const Login = () => {
       else if (role === 'Manager') navigate('/dashboard/manager');
       else if (role === 'Staff') navigate('/dashboard/staff');
       else if (role === 'Doctor') navigate('/dashboard/doctor');
-      else navigate('/dashboard/user');
+      else navigate('/dashboard/customer');
     } catch (error: any) {
       console.error('Lỗi login:', error);
       setError(error.message || 'Tài khoản hoặc mật khẩu không đúng.');

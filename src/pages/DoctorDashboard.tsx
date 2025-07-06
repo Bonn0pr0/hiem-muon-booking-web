@@ -27,6 +27,7 @@ import { authService } from "@/api/authService";
 import { workScheduleApi } from "@/api/workScheduleApi";
 import { format, parseISO } from "date-fns";
 import PatientProfile from "@/components/PatientProfile";
+import { getPatientsByDoctorId } from "@/api/bookingApi";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -37,47 +38,7 @@ const DoctorDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [doctorInfo, setDoctorInfo] = useState<any>(null);
   const [showPatientProfile, setShowPatientProfile] = useState(false);
-
-  const patients = [
-    {
-      id: 1,
-      name: "Nguyễn Thị Lan",
-      age: 32,
-      phone: "0901234567",
-      diagnosis: "Vô sinh thứ phát",
-      treatment: "IVF",
-      status: "Đang điều trị",
-      nextAppointment: "2024-06-25 09:00",
-      notes: "Đã thực hiện kích thích buồng trứng"
-    },
-    {
-      id: 2,
-      name: "Trần Thị Mai",
-      age: 28,
-      phone: "0907654321",
-      diagnosis: "Vô sinh nguyên phát",
-      treatment: "IUI",
-      status: "Theo dõi",
-      nextAppointment: "2024-06-22 14:00",
-      notes: "Cần theo dõi hormone"
-    },
-    {
-      id: 3,
-      name: "Lê Thị Hoa",
-      age: 35,
-      phone: "0912345678",
-      diagnosis: "Rối loạn nội tiết",
-      treatment: "Điều trị nội khoa",
-      status: "Ổn định",
-      nextAppointment: "2024-06-30 10:30",
-      notes: "Phản ứng tốt với thuốc điều trị"
-    }
-  ];
-
-  // Lọc bệnh nhân theo tên
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [patients, setPatients] = useState([]);
 
   const todaySchedule = [
     {
@@ -148,6 +109,20 @@ const DoctorDashboard = () => {
     fetchSchedule();
   }, []);
 
+  useEffect(() => {
+    const fetchPatients = async () => {
+      // Lấy doctorId từ user hiện tại
+      const userRes = await authService.getCurrentUser();
+      const user = userRes?.data || userRes;
+      const doctorId = user.id;
+      if (!doctorId) return;
+      // Gọi API lấy danh sách bệnh nhân
+      const res = await getPatientsByDoctorId(doctorId);
+      setPatients(res.data?.data || []);
+    };
+    fetchPatients();
+  }, []);
+
   if (loading) return <div>Đang tải lịch làm việc...</div>;
   if (error) return <div>{error}</div>;
 
@@ -191,7 +166,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {filteredPatients.length === 0 ? (
+                  {patients.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       {searchTerm 
                         ? `Không tìm thấy bệnh nhân nào với tên "${searchTerm}"`
@@ -199,7 +174,7 @@ const DoctorDashboard = () => {
                       }
                     </div>
                   ) : (
-                    filteredPatients.map((patient) => (
+                    patients.map((patient) => (
                       <div key={patient.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>
