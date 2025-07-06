@@ -11,7 +11,7 @@ const bookingApi = {
     return api.post("/api/bookings/form", payload);
   },
   getByCustomerId: async (customerId) => {
-    return api.get(`/api/bookings/${customerId}`);
+    return api.get(`/api/bookings/customer/${customerId}`);
   }
 };
 

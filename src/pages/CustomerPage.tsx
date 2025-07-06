@@ -4,14 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import NotificationBell from "@/components/NotificationBell";
 import PatientProfile from "@/components/PatientProfile";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { bookingApi } from "@/api/bookingApi";
 
 const CustomerPage = () => {
   const navigate = useNavigate();
   const [showPatientProfile, setShowPatientProfile] = useState(false);
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Mock user data - in real app this would come from auth context
-  const user = {
+  const userData = {
     name: "Nguyễn Thị Mai",
     membershipLevel: "VIP",
     email: "mai.nguyen@email.com",
@@ -116,6 +122,20 @@ const CustomerPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (!user?.id) return;
+    setLoading(true);
+    bookingApi.getByCustomerId(user.id)
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
+        setBookings(data);
+      })
+      .catch(() => setBookings([]))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  if (loading) return <div>Đang tải lịch hẹn...</div>;
+
   return (
     <div className="min-h-screen">
       {/* Welcome Section */}
@@ -127,11 +147,11 @@ const CustomerPage = () => {
               <NotificationBell />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Chào mừng trở lại, <span className="text-primary">{user.name}</span>!
+              Chào mừng trở lại, <span className="text-primary">{userData.name}</span>!
             </h1>
             <div className="flex items-center justify-center space-x-2 mb-6">
               <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                Thành viên {user.membershipLevel}
+                Thành viên {userData.membershipLevel}
               </Badge>
             </div>
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
@@ -185,20 +205,20 @@ const CustomerPage = () => {
           
           <div className="max-w-4xl mx-auto">
             <div className="grid gap-4">
-              {myAppointments.map((appointment) => (
-                <Card key={appointment.id} className="hover:shadow-md transition-shadow">
+              {Array.isArray(bookings) && bookings.map((booking) => (
+                <Card key={booking.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-semibold text-lg">{appointment.service}</h3>
-                          {getStatusBadge(appointment.status)}
+                          <h3 className="font-semibold text-lg">{booking.serviceName}</h3>
+                          {getStatusBadge(booking.status)}
                         </div>
-                        <p className="text-muted-foreground mb-1">👨‍⚕️ {appointment.doctor}</p>
-                        <p className="text-muted-foreground">🕐 {appointment.date} - {appointment.time}</p>
+                        <p className="text-muted-foreground mb-1">👨‍⚕️ {booking.doctorName}</p>
+                        <p className="text-muted-foreground">🕐 {booking.appointmentTime}</p>
                       </div>
                       <div className="flex space-x-2">
-                        {appointment.status === 'upcoming' && (
+                        {booking.status === 'upcoming' && (
                           <>
                             <Button variant="outline" size="sm">
                               Đổi lịch
@@ -208,7 +228,7 @@ const CustomerPage = () => {
                             </Button>
                           </>
                         )}
-                        {appointment.status === 'completed' && (
+                        {booking.status === 'completed' && (
                           <Button variant="outline" size="sm">
                             Xem kết quả
                           </Button>
@@ -325,7 +345,7 @@ const CustomerPage = () => {
 
       {/* Patient Profile Modal */}
       <PatientProfile 
-        patient={user}
+        patient={userData}
         isOpen={showPatientProfile}
         onClose={() => setShowPatientProfile(false)}
         isReadOnly={true}
