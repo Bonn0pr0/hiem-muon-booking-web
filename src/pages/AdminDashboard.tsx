@@ -201,7 +201,7 @@ const AdminDashboard = () => {
             </Card> */}
 
             {/* System Health */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Tình trạng hệ thống</CardTitle>
               </CardHeader>
@@ -223,14 +223,13 @@ const AdminDashboard = () => {
                   <div className="text-sm text-muted-foreground">Avg Response</div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </TabsContent>
 
           <TabsContent value="accounts">
             <AccountManagement
               users={users}
               roles={roles}
-              onDeleteUser={handleDeleteUser}
               onChangeRole={handleChangeRole}
             />
           </TabsContent>
