@@ -173,7 +173,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
         examDate: newTest.date + "T00:00:00", // <-- This is the fix!
         diagnosis: newTest.result,
         normalRange: newTest.range,
-        recommendation: newTest.recommendation // if you have this field in your form
+        recommendation: newTest.status // <-- map từ status của form sang recommendation
       });
       // Refetch after success
       const res = await getExaminationsByBooking(patient.bookingId);
@@ -256,7 +256,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                       </div>
                     ) : (
                       testResults.map((test) => (
-                        <div key={test.examId} className="border rounded-lg p-4 mb-3 bg-white flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div key={test.id} className="border rounded-lg p-4 mb-3 bg-white flex flex-col md:flex-row md:items-center md:justify-between">
                           <div className="flex-1">
                             <div className="font-semibold text-base mb-1">{test.name}</div>
                             <div className="text-xs text-muted-foreground mb-2">
@@ -273,20 +273,20 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                               </div>
                             </div>
                           </div>
-                          {test.status && (
+                          {test.recommendation && (
                             <div className="mt-2 md:mt-0 md:ml-4 flex items-center gap-2 flex-shrink-0">
                               <Badge className={
-                                test.status === "Bình thường" ? "bg-green-100 text-green-800" :
-                                test.status === "Tốt" ? "bg-blue-100 text-blue-800" :
-                                test.status === "Cần theo dõi" ? "bg-yellow-100 text-yellow-800" :
-                                test.status === "Bất thường" ? "bg-red-100 text-red-800" :
+                                test.recommendation === "Bình thường" ? "bg-green-100 text-green-800" :
+                                test.recommendation === "Tốt" ? "bg-blue-100 text-blue-800" :
+                                test.recommendation === "Cần theo dõi" ? "bg-yellow-100 text-yellow-800" :
+                                test.recommendation === "Bất thường" ? "bg-red-100 text-red-800" :
                                 ""
                               }>
-                                {test.status}
+                                {test.recommendation}
                               </Badge>
                               <button
                                 className="ml-1 p-1 rounded hover:bg-gray-100 transition"
-                                onClick={() => setEditingTest(test.examId)}
+                                onClick={() => setEditingTest(test.id)}
                                 title="Chỉnh sửa"
                                 type="button"
                               >
