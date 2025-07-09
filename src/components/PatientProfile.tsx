@@ -1,4 +1,5 @@
 
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,14 +9,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Edit, Save, X, Plus } from "lucide-react";
+import { getReferenceRange, getAllReferenceRanges } from "@/api/referenceRangeApi";
+import { createExamination, getExaminationsByBooking } from "@/api/examinationApi";
 
 interface PatientProfileProps {
   patient: any;
   isOpen: boolean;
   onClose: () => void;
   isReadOnly?: boolean;
+}
+
+function isValidDate(dateString: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime()) && dateString === date.toISOString().split('T')[0];
 }
 
 const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: PatientProfileProps) => {
@@ -31,32 +40,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
   const [showAddTreatment, setShowAddTreatment] = useState(false);
 
   // State for form data
-  const [testResults, setTestResults] = useState([
-    {
-      id: 1,
-      date: "2024-06-15",
-      type: "Xét nghiệm hormone FSH",
-      result: "8.2 mIU/mL",
-      status: "Bình thường",
-      range: "1.5-12.4 mIU/mL"
-    },
-    {
-      id: 2,
-      date: "2024-06-10",
-      type: "Xét nghiệm AMH",
-      result: "2.1 ng/mL",
-      status: "Bình thường",
-      range: "1.0-3.5 ng/mL"
-    },
-    {
-      id: 3,
-      date: "2024-06-05",
-      type: "Siêu âm buồng trứng",
-      result: "Số nang noãn: 12",
-      status: "Tốt",
-      range: "6-20"
-    }
-  ]);
+  const [testResults, setTestResults] = useState([]);
 
   const [examResults, setExamResults] = useState([
     {
@@ -176,10 +160,28 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
     setEditingTreatment(null);
   };
 
-  const handleAddTest = (newTest: any) => {
-    const id = Math.max(...testResults.map(t => t.id)) + 1;
-    setTestResults(prev => [...prev, { ...newTest, id }]);
-    setShowAddTest(false);
+  const handleAddTest = async (newTest: any) => {
+    // Validate date
+    if (!isValidDate(newTest.date)) {
+      alert("Ngày xét nghiệm không hợp lệ!");
+      return;
+    }
+    try {
+      await createExamination({
+        bookingId: patient.bookingId,
+        name: newTest.type,
+        examDate: newTest.date + "T00:00:00", // <-- This is the fix!
+        diagnosis: newTest.result,
+        normalRange: newTest.range,
+        recommendation: newTest.recommendation // if you have this field in your form
+      });
+      // Refetch after success
+      const res = await getExaminationsByBooking(patient.bookingId);
+      setTestResults(res.data.data || []);
+      setShowAddTest(false);
+    } catch (err: any) {
+      alert("Lỗi khi thêm xét nghiệm: " + (err?.response?.data?.message || err.message));
+    }
   };
 
   const handleAddPrescription = (newPrescription: any) => {
@@ -199,6 +201,14 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
     setTreatmentPlan(prev => [...prev, { ...newTreatment, id }]);
     setShowAddTreatment(false);
   };
+
+  useEffect(() => {
+    if (patient?.bookingId) {
+      getExaminationsByBooking(patient.bookingId).then(res => {
+        setTestResults(res.data.data || []);
+      });
+    }
+  }, [patient]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -238,17 +248,55 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                 <CardContent>
                   <div className="space-y-4">
                     {!isReadOnly && showAddTest && (
-                      <AddTestForm onSave={handleAddTest} onCancel={() => setShowAddTest(false)} />
+                      <AddTestForm onSave={handleAddTest} onCancel={() => setShowAddTest(false)} patient={patient} />
                     )}
-                    {testResults.map((test) => (
-                      <div key={test.id} className="border rounded-lg p-4">
-                        {!isReadOnly && editingTest === test.id ? (
-                          <EditTestForm test={test} onSave={handleSaveTest} onCancel={() => setEditingTest(null)} />
-                        ) : (
-                          <TestDisplay test={test} onEdit={!isReadOnly ? () => setEditingTest(test.id) : undefined} getStatusColor={getStatusColor} isReadOnly={isReadOnly} />
-                        )}
+                    {testResults.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Không có xét nghiệm nào
                       </div>
-                    ))}
+                    ) : (
+                      testResults.map((test) => (
+                        <div key={test.examId} className="border rounded-lg p-4 mb-3 bg-white flex flex-col md:flex-row md:items-center md:justify-between">
+                          <div className="flex-1">
+                            <div className="font-semibold text-base mb-1">{test.name}</div>
+                            <div className="text-xs text-muted-foreground mb-2">
+                              {test.examDate ? test.examDate.split('T')[0] : ""}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div>
+                                <span className="text-sm font-medium">Kết quả:</span>
+                                <span className="text-sm ml-1">{test.diagnosis}</span>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium">Khoảng bình thường:</span>
+                                <span className="text-sm ml-1">{test.normalRange}</span>
+                              </div>
+                            </div>
+                          </div>
+                          {test.status && (
+                            <div className="mt-2 md:mt-0 md:ml-4 flex items-center gap-2 flex-shrink-0">
+                              <Badge className={
+                                test.status === "Bình thường" ? "bg-green-100 text-green-800" :
+                                test.status === "Tốt" ? "bg-blue-100 text-blue-800" :
+                                test.status === "Cần theo dõi" ? "bg-yellow-100 text-yellow-800" :
+                                test.status === "Bất thường" ? "bg-red-100 text-red-800" :
+                                ""
+                              }>
+                                {test.status}
+                              </Badge>
+                              <button
+                                className="ml-1 p-1 rounded hover:bg-gray-100 transition"
+                                onClick={() => setEditingTest(test.examId)}
+                                title="Chỉnh sửa"
+                                type="button"
+                              >
+                                <Edit size={18} className="text-gray-500" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -476,7 +524,7 @@ const EditTestForm = ({ test, onSave, onCancel }: any) => {
 };
 
 // Component thêm xét nghiệm mới
-const AddTestForm = ({ onSave, onCancel }: any) => {
+const AddTestForm = ({ onSave, onCancel, patient }: any) => {
   const [formData, setFormData] = useState({
     type: '',
     date: new Date().toISOString().split('T')[0],
@@ -484,10 +532,53 @@ const AddTestForm = ({ onSave, onCancel }: any) => {
     status: 'Bình thường',
     range: ''
   });
+  const [loadingRange, setLoadingRange] = useState(false);
+  const [rangeError, setRangeError] = useState('');
+  const [testTypes, setTestTypes] = useState<{testName: string, normalRange: string}[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(true);
+
+  // Lấy danh sách loại xét nghiệm khi mở form
+  useEffect(() => {
+    const fetchTypes = async () => {
+      setLoadingTypes(true);
+      try {
+        const res = await getAllReferenceRanges();
+        setTestTypes(res.data.data || []);
+      } catch (err) {
+        setTestTypes([]);
+      } finally {
+        setLoadingTypes(false);
+      }
+    };
+    fetchTypes();
+  }, []);
+
+  // Khi chọn loại xét nghiệm, tự động lấy khoảng bình thường
+  const handleTypeChange = async (value: string) => {
+    setFormData({ ...formData, type: value });
+    setRangeError('');
+    if (value) {
+      setLoadingRange(true);
+      try {
+        const res = await getReferenceRange(value);
+        setFormData((prev) => ({ ...prev, range: res.data }));
+      } catch (err) {
+        setFormData((prev) => ({ ...prev, range: '' }));
+        setRangeError('Không tìm thấy khoảng bình thường');
+      } finally {
+        setLoadingRange(false);
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, range: '' }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      bookingId: patient.bookingId, // LẤY TỪ patient props
+    });
     setFormData({
       type: '',
       date: new Date().toISOString().split('T')[0],
@@ -495,6 +586,7 @@ const AddTestForm = ({ onSave, onCancel }: any) => {
       status: 'Bình thường',
       range: ''
     });
+    setRangeError('');
   };
 
   return (
@@ -504,12 +596,20 @@ const AddTestForm = ({ onSave, onCancel }: any) => {
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="new-type">Loại xét nghiệm</Label>
-            <Input
-              id="new-type"
+            <Select
               value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              required
-            />
+              onValueChange={handleTypeChange}
+              disabled={loadingTypes}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingTypes ? 'Đang tải...' : 'Chọn loại xét nghiệm'} />
+              </SelectTrigger>
+              <SelectContent>
+                {testTypes.map((t) => (
+                  <SelectItem key={t.testName} value={t.testName}>{t.testName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="new-date">Ngày xét nghiệm</Label>
@@ -535,9 +635,11 @@ const AddTestForm = ({ onSave, onCancel }: any) => {
             <Input
               id="new-range"
               value={formData.range}
-              onChange={(e) => setFormData({...formData, range: e.target.value})}
-              required
+              readOnly
+              disabled={loadingRange}
+              placeholder={loadingRange ? 'Đang tải...' : ''}
             />
+            {rangeError && <p className="text-xs text-red-500 mt-1">{rangeError}</p>}
           </div>
           <div>
             <Label htmlFor="new-status">Trạng thái</Label>

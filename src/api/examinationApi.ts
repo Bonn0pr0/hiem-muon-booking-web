@@ -8,5 +8,9 @@ export const createExamination = (data: {
   normalRange?: string;
   name?: string;
 }) => {
-  return api.post("/examinations", data);
+  return api.post("/api/v1/examinations", data);
+};
+
+export const getExaminationsByBooking = (bookingId: number) => {
+  return api.get(`/api/v1/examinations/booking/${bookingId}`);
 };
