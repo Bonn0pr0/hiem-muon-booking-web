@@ -118,7 +118,7 @@ const DoctorDashboard = () => {
       if (!doctorId) return;
       // Gọi API lấy danh sách bệnh nhân
       const res = await getPatientsByDoctorId(doctorId);
-      setPatients(res.data?.data || []);
+      setPatients(res.data.data || []);
     };
     fetchPatients();
   }, []);
@@ -188,134 +188,9 @@ const DoctorDashboard = () => {
                           </Badge>
                         </div>
                         
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm font-medium">Chẩn đoán:</p>
-                            <p className="text-sm text-muted-foreground">{patient.diagnosis}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Phương pháp điều trị:</p>
-                            <p className="text-sm text-muted-foreground">{patient.treatment}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Lịch hẹn tiếp theo:</p>
-                            <p className="text-sm text-muted-foreground">{patient.nextAppointment}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Ghi chú:</p>
-                            <p className="text-sm text-muted-foreground">{patient.notes}</p>
-                          </div>
-                        </div>
+                        
 
                         <div className="flex space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                Ghi chú khám
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Ghi chú khám bệnh - {patient.name}</DialogTitle>
-                                <DialogDescription>
-                                  Cập nhật kết quả khám và xét nghiệm
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="examination">Kết quả khám</Label>
-                                  <Textarea 
-                                    id="examination"
-                                    placeholder="Nhập kết quả khám bệnh..."
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="test-results">Kết quả xét nghiệm</Label>
-                                  <Textarea 
-                                    id="test-results"
-                                    placeholder="Nhập kết quả các xét nghiệm..."
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="prescription">Đơn thuốc</Label>
-                                  <Textarea 
-                                    id="prescription"
-                                    placeholder="Kê đơn thuốc..."
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="next-steps">Hướng điều trị tiếp theo</Label>
-                                  <Textarea 
-                                    id="next-steps"
-                                    placeholder="Lên kế hoạch điều trị tiếp theo..."
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div className="flex justify-end space-x-2">
-                                  <Button variant="outline">Hủy</Button>
-                                  <Button>Lưu ghi chú</Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                Cập nhật tiến trình
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Cập nhật tiến trình điều trị</DialogTitle>
-                                <DialogDescription>
-                                  Cập nhật trạng thái và tiến trình điều trị của bệnh nhân
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="status">Trạng thái điều trị</Label>
-                                  <Select>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Chọn trạng thái" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="treatment">Đang điều trị</SelectItem>
-                                      <SelectItem value="monitoring">Theo dõi</SelectItem>
-                                      <SelectItem value="stable">Ổn định</SelectItem>
-                                      <SelectItem value="completed">Hoàn thành</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor="progress">Tiến trình điều trị</Label>
-                                  <Textarea 
-                                    id="progress"
-                                    placeholder="Mô tả tiến trình điều trị hiện tại..."
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="next-appointment">Lịch hẹn tiếp theo</Label>
-                                  <Input 
-                                    id="next-appointment"
-                                    type="datetime-local"
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div className="flex justify-end space-x-2">
-                                  <Button variant="outline">Hủy</Button>
-                                  <Button onClick={() => handleUpdateTreatment(patient.id, {})}>
-                                    Cập nhật
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-
                           <Button 
                             variant="outline" 
                             size="sm"
