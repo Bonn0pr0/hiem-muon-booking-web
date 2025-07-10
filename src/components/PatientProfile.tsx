@@ -14,6 +14,7 @@ import { Edit, Save, X, Plus } from "lucide-react";
 import { getReferenceRange, getAllReferenceRanges } from "@/api/referenceRangeApi";
 import { createExamination, getExaminationsByBooking, getExaminationsByCustomer } from "@/api/examinationApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { createMedicalResult, getMedicalResultsByCustomer, getMedicalResultsByExam } from "@/api/medicalResultsApi";
 
 interface PatientProfileProps {
   patient: any;
@@ -39,28 +40,12 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
   const [showAddPrescription, setShowAddPrescription] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
   const [showAddTreatment, setShowAddTreatment] = useState(false);
+  const [showMedicalResultForm, setShowMedicalResultForm] = useState<number | null>(null);
 
   // State for form data
   const [testResults, setTestResults] = useState([]);
 
-  const [examResults, setExamResults] = useState([
-    {
-      id: 1,
-      date: "2024-06-15",
-      examination: "Khám phụ khoa tổng quát",
-      findings: "Tử cung bình thường, buồng trứng hoạt động tốt",
-      conclusion: "Không có bất thường",
-      doctor: "BS. Trần Văn Nam"
-    },
-    {
-      id: 2,
-      date: "2024-06-10",
-      examination: "Siêu âm tử cung phần phụ",
-      findings: "Nội mạc tử cung dày 8mm, buồng trứng có nhiều nang noãn",
-      conclusion: "Phù hợp cho quá trình kích thích buồng trứng",
-      doctor: "BS. Trần Văn Nam"
-    }
-  ]);
+  const [examResults, setExamResults] = useState([]);
 
   const [treatmentPlan, setTreatmentPlan] = useState([
     {
@@ -217,6 +202,16 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
     }
   }, [user, patient]);
 
+  useEffect(() => {
+    if (patient?.bookingId) {
+      getExaminationsByBooking(patient.bookingId).then(res => {
+        // Log ra để kiểm tra cấu trúc object
+        console.log("Danh sách examination:", res.data.data);
+        setExamResults(res.data.data || []);
+      });
+    }
+  }, [patient]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -299,6 +294,17 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                               >
                                 <Edit size={18} className="text-gray-500" />
                               </button>
+                              {/* Nút nhập kết quả y khoa */}
+                              {!isReadOnly && user?.role === "Doctor" && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  title="Nhập kết quả khám"
+                                  onClick={() => setShowMedicalResultForm(test.id)}
+                                >
+                                  <Plus size={18} className="text-gray-500" />
+                                </Button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -328,14 +334,37 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                 <CardContent>
                   <div className="space-y-4">
                     {!isReadOnly && showAddExam && (
-                      <AddExamForm onSave={handleAddExam} onCancel={() => setShowAddExam(false)} />
+                      <AddExamForm
+                        onSave={handleAddExam}
+                        onCancel={() => setShowAddExam(false)}
+                        testResults={testResults}
+                      />
                     )}
                     {examResults.map((exam) => (
-                      <div key={exam.id} className="border rounded-lg p-4">
-                        {!isReadOnly && editingExam === exam.id ? (
-                          <EditExamForm exam={exam} onSave={handleSaveExam} onCancel={() => setEditingExam(null)} />
-                        ) : (
-                          <ExamDisplay exam={exam} onEdit={!isReadOnly ? () => setEditingExam(exam.id) : undefined} isReadOnly={isReadOnly} />
+                      <div key={exam.examId} className="border rounded-lg p-4 mb-3 bg-white">
+                        <div className="font-semibold text-base mb-1">
+                          {exam.examination || exam.name || "Không rõ"}
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-2">
+                          {exam.examDate ? exam.examDate.split('T')[0] : ""}
+                        </div>
+                        {/* ...các trường khác... */}
+                        <Button
+                          size="sm"
+                          onClick={() => setShowMedicalResultForm(exam.examId)} // <-- LẤY ĐÚNG ID
+                        >
+                          Xem/Nhập kết quả y khoa
+                        </Button>
+                        {/* Hiển thị form nhập kết quả y khoa cho đúng exam */}
+                        {showMedicalResultForm === exam.examId && (
+                          <MedicalResultForm
+                            exam={exam} // <-- TRUYỀN ĐÚNG OBJECT exam
+                            onClose={() => setShowMedicalResultForm(null)}
+                            onSuccess={() => {
+                              alert("Tạo kết quả thành công!");
+                              setShowMedicalResultForm(null);
+                            }}
+                          />
                         )}
                       </div>
                     ))}
@@ -415,6 +444,17 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
             </TabsContent>
           </Tabs>
         </div>
+
+        {showMedicalResultForm && (
+          <MedicalResultForm
+            exam={examResults.find(e => e.examId === showMedicalResultForm)} // truyền object exam
+            onClose={() => setShowMedicalResultForm(null)}
+            onSuccess={() => {
+              alert("Tạo kết quả thành công!");
+              setShowMedicalResultForm(null);
+            }}
+          />
+        )}
 
         <div className="flex justify-end mt-6">
           <Button onClick={onClose}>Đóng</Button>
@@ -772,13 +812,14 @@ const EditExamForm = ({ exam, onSave, onCancel }: any) => {
   );
 };
 
-const AddExamForm = ({ onSave, onCancel }: any) => {
+const AddExamForm = ({ onSave, onCancel, testResults }: any) => {
   const [formData, setFormData] = useState({
     examination: '',
     date: new Date().toISOString().split('T')[0],
     findings: '',
     conclusion: '',
-    doctor: 'BS. Trần Văn Nam'
+    doctor: 'BS. Trần Văn Nam',
+    linkedTestId: testResults.length > 0 ? testResults[0].id : ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -789,7 +830,8 @@ const AddExamForm = ({ onSave, onCancel }: any) => {
       date: new Date().toISOString().split('T')[0],
       findings: '',
       conclusion: '',
-      doctor: 'BS. Trần Văn Nam'
+      doctor: 'BS. Trần Văn Nam',
+      linkedTestId: testResults.length > 0 ? testResults[0].id : ''
     });
   };
 
@@ -825,6 +867,22 @@ const AddExamForm = ({ onSave, onCancel }: any) => {
               onChange={(e) => setFormData({...formData, doctor: e.target.value})}
               required
             />
+          </div>
+          <div>
+            <Label htmlFor="linked-test">Chọn xét nghiệm liên quan</Label>
+            <select
+              id="linked-test"
+              value={formData.linkedTestId}
+              onChange={e => setFormData({...formData, linkedTestId: e.target.value})}
+              required
+              className="input"
+            >
+              {testResults.map((test) => (
+                <option key={test.id} value={test.id}>
+                  {test.name} ({test.examDate ? test.examDate.split('T')[0] : ''})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div>
@@ -1297,6 +1355,113 @@ const AddPrescriptionForm = ({ onSave, onCancel }: any) => {
           </Button>
         </div>
       </form>
+    </div>
+  );
+};
+
+const MedicalResultForm = ({ exam, onClose, onSuccess, initialData }: {
+  exam: any,
+  onClose: () => void,
+  onSuccess: () => void,
+  initialData?: any // <-- dấu ? để không bắt buộc
+}) => {
+  const [form, setForm] = useState({
+    resultValue: initialData?.resultValue || "",
+    resultDate: initialData?.resultDate || new Date().toISOString().split("T")[0],
+    conclusion: initialData?.conclusion || ""
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await createMedicalResult({
+        examId: Number(exam.examId),
+        resultValue: form.resultValue,
+        resultDate: form.resultDate,
+        conclusion: form.conclusion
+      });
+      onSuccess?.();
+    } catch (err) {
+      alert("Lỗi khi tạo kết quả!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 relative animate-fadeIn">
+        <button
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+          onClick={onClose}
+          aria-label="Đóng"
+        >
+          <X size={22} />
+        </button>
+        <h3 className="text-xl font-bold mb-6 text-center">{initialData ? "Sửa kết quả y khoa" : "Nhập kết quả y khoa"}</h3>
+        {/* Thông tin lần khám */}
+        <div className="mb-4 p-3 bg-gray-50 rounded border">
+          <div><b>Tên lần khám:</b> {exam?.examination || exam?.name || "Không rõ"}</div>
+          <div><b>Ngày khám:</b> {exam?.examDate ? exam.examDate.split('T')[0] : ""}</div>
+          <div><b>Bác sĩ:</b> {exam?.doctorName || "Chưa rõ"}</div>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <Label className="mb-1 block">Giá trị kết quả</Label>
+            <Input
+              name="resultValue"
+              value={form.resultValue}
+              onChange={handleChange}
+              required
+              placeholder="Nhập giá trị kết quả"
+            />
+          </div>
+          <div>
+            <Label className="mb-1 block">Ngày kết quả</Label>
+            <Input
+              name="resultDate"
+              type="date"
+              value={form.resultDate}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <Label className="mb-1 block">Kết luận</Label>
+            <Textarea
+              name="conclusion"
+              value={form.conclusion}
+              onChange={handleChange}
+              required
+              placeholder="Nhập kết luận"
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="min-w-[80px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-primary text-white min-w-[80px]"
+            >
+              {loading ? "Đang lưu..." : initialData ? "Lưu" : "Tạo mới"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
