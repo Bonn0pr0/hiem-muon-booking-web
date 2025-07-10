@@ -14,14 +14,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import NotificationBell from "@/components/NotificationBell";
 import PatientProfile from "@/components/PatientProfile";
+import { useAuth } from "@/contexts/AuthContext";
+import { getExaminationsByCustomer } from "@/api/examinationApi";
+import { useEffect } from "react";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showDashboard, setShowDashboard] = useState(false);
   const [showPatientProfile, setShowPatientProfile] = useState(false);
+  const [testResults, setTestResults] = useState<any[]>([]);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      getExaminationsByCustomer(user.id).then(res => {
+        setTestResults(res.data.data || []);
+      });
+    }
+  }, [user]);
 
   // Mock user data
-  const user = {
+  const userData = {
     name: "Nguyễn Thị Mai",
     membershipLevel: "VIP",
     email: "mai.nguyen@email.com",
@@ -100,23 +114,6 @@ const UserDashboard = () => {
     }
   ];
 
-  const testResults = [
-    {
-      id: 1,
-      date: "2024-06-10",
-      type: "Xét nghiệm hormone",
-      result: "Bình thường",
-      doctor: "BS. Nguyễn Thị Mai"
-    },
-    {
-      id: 2,
-      date: "2024-05-25",
-      type: "Siêu âm buồng trứng",
-      result: "Tốt",
-      doctor: "BS. Trần Văn Nam"
-    }
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -145,9 +142,9 @@ const UserDashboard = () => {
               <DialogTrigger asChild>
                 <div className="cursor-pointer inline-block">
                   <Avatar className="h-20 w-20 mx-auto mb-4 hover:ring-4 hover:ring-primary/20 transition-all">
-                    <AvatarImage src="/placeholder.svg" alt={user.name} />
+                    <AvatarImage src="/placeholder.svg" alt={userData.name} />
                     <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {userData.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                 </div>
@@ -170,15 +167,15 @@ const UserDashboard = () => {
                     <CardContent className="space-y-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Họ và tên</p>
-                        <p className="font-medium">{user.name}</p>
+                        <p className="font-medium">{userData.name}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium">{user.email}</p>
+                        <p className="font-medium">{userData.email}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Số điện thoại</p>
-                        <p className="font-medium">{user.phone}</p>
+                        <p className="font-medium">{userData.phone}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Khách hàng từ</p>
@@ -333,11 +330,11 @@ const UserDashboard = () => {
             </Dialog>
 
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Chào mừng trở lại, <span className="text-primary">{user.name}</span>!
+              Chào mừng trở lại, <span className="text-primary">{userData.name}</span>!
             </h1>
             <div className="flex items-center justify-center space-x-2 mb-6">
               <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                Thành viên {user.membershipLevel}
+                Thành viên {userData.membershipLevel}
               </Badge>
             </div>
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
@@ -447,8 +444,8 @@ const UserDashboard = () => {
       </section>
 
       {/* Patient Profile Modal */}
-      <PatientProfile 
-        patient={user}
+      <PatientProfile
+        patient={userData}
         isOpen={showPatientProfile}
         onClose={() => setShowPatientProfile(false)}
         isReadOnly={true}

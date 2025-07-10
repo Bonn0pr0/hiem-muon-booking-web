@@ -14,3 +14,7 @@ export const createExamination = (data: {
 export const getExaminationsByBooking = (bookingId: number) => {
   return api.get(`/api/v1/examinations/booking/${bookingId}`);
 };
+
+export const getExaminationsByCustomer = (customerId: number) => {
+  return api.get(`/api/v1/examinations/customer/${customerId}`);
+};

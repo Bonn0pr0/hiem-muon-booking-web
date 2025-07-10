@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { Edit, Save, X, Plus } from "lucide-react";
 import { getReferenceRange, getAllReferenceRanges } from "@/api/referenceRangeApi";
-import { createExamination, getExaminationsByBooking } from "@/api/examinationApi";
+import { createExamination, getExaminationsByBooking, getExaminationsByCustomer } from "@/api/examinationApi";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PatientProfileProps {
   patient: any;
@@ -202,13 +203,19 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
     setShowAddTreatment(false);
   };
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    if (patient?.bookingId) {
+    if (user?.role === "Customer" && user?.id) {
+      getExaminationsByCustomer(user.id).then(res => {
+        setTestResults(res.data.data || []);
+      });
+    } else if (patient?.bookingId) {
       getExaminationsByBooking(patient.bookingId).then(res => {
         setTestResults(res.data.data || []);
       });
     }
-  }, [patient]);
+  }, [user, patient]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
