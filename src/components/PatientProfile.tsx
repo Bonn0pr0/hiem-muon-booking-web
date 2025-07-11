@@ -14,7 +14,7 @@ import { Edit, Save, X, Plus } from "lucide-react";
 import { getReferenceRange, getAllReferenceRanges } from "@/api/referenceRangeApi";
 import { createExamination, getExaminationsByBooking, getExaminationsByCustomer } from "@/api/examinationApi";
 import { useAuth } from "@/contexts/AuthContext";
-import { createMedicalResult, getMedicalResultsByCustomer, getMedicalResultsByExam } from "@/api/medicalResultsApi";
+import { createMedicalResult, updateMedicalResult, getMedicalResultsByExam, getMedicalResultsByCustomer } from "@/api/medicalResultsApi";
 
 interface PatientProfileProps {
   patient: any;
@@ -189,6 +189,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
   };
 
   const { user } = useAuth();
+  const customerId = user?.id;
 
   useEffect(() => {
     if (user?.role === "Customer" && user?.id) {
@@ -211,6 +212,45 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
       });
     }
   }, [patient]);
+
+  const [medicalResultsByExamId, setMedicalResultsByExamId] = useState<{ [key: number]: any }>({});
+  const [medicalResults, setMedicalResults] = useState([]);
+
+  useEffect(() => {
+    if (examResults.length > 0) {
+      examResults.forEach((exam) => {
+        if (!medicalResultsByExamId[exam.examId]) {
+          getMedicalResultsByExam(exam.examId).then(res => {
+            // API trả về mảng, chỉ lấy phần tử đầu tiên nếu chỉ có 1 result/exam
+            setMedicalResultsByExamId(prev => ({
+              ...prev,
+              [exam.examId]: res.data.data && res.data.data.length > 0 ? res.data.data[0] : null
+            }));
+          });
+        }
+      });
+    }
+    // eslint-disable-next-line
+  }, [examResults]);
+
+  useEffect(() => {
+    if (user?.role === "Customer" && user?.id) {
+      getMedicalResultsByCustomer(user.id).then(res => {
+        setMedicalResults(res.data.data || []);
+      });
+    }
+  }, [user]);
+
+  const handleShowMedicalResultForm = (examId: number) => {
+    getMedicalResultsByExam(examId).then(res => {
+      setMedicalResultsByExamId(prev => ({
+        ...prev,
+        [examId]: res.data.data && res.data.data.length > 0 ? res.data.data[0] : null
+      }));
+      // Đợi setState xong mới mở form (nếu cần, dùng callback hoặc setTimeout 0)
+      setTimeout(() => setShowMedicalResultForm(examId), 0);
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -300,7 +340,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                                   size="icon"
                                   variant="ghost"
                                   title="Nhập kết quả khám"
-                                  onClick={() => setShowMedicalResultForm(test.id)}
+                                  onClick={() => handleShowMedicalResultForm(test.id)}
                                 >
                                   <Plus size={18} className="text-gray-500" />
                                 </Button>
@@ -340,34 +380,132 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
                         testResults={testResults}
                       />
                     )}
-                    {examResults.map((exam) => (
-                      <div key={exam.examId} className="border rounded-lg p-4 mb-3 bg-white">
-                        <div className="font-semibold text-base mb-1">
-                          {exam.examination || exam.name || "Không rõ"}
+                    {user?.role === "Customer" ? (
+                      medicalResults.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          Chưa có kết quả y khoa nào.
                         </div>
-                        <div className="text-xs text-muted-foreground mb-2">
-                          {exam.examDate ? exam.examDate.split('T')[0] : ""}
-                        </div>
-                        {/* ...các trường khác... */}
-                        <Button
-                          size="sm"
-                          onClick={() => setShowMedicalResultForm(exam.examId)} // <-- LẤY ĐÚNG ID
-                        >
-                          Xem/Nhập kết quả y khoa
-                        </Button>
-                        {/* Hiển thị form nhập kết quả y khoa cho đúng exam */}
-                        {showMedicalResultForm === exam.examId && (
-                          <MedicalResultForm
-                            exam={exam} // <-- TRUYỀN ĐÚNG OBJECT exam
-                            onClose={() => setShowMedicalResultForm(null)}
-                            onSuccess={() => {
-                              alert("Tạo kết quả thành công!");
-                              setShowMedicalResultForm(null);
-                            }}
-                          />
-                        )}
-                      </div>
-                    ))}
+                      ) : (
+                        medicalResults.map((result) => (
+                          <div key={result.resultId} className="border rounded-xl p-5 mb-4 bg-white shadow-sm">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
+                              <div className="font-semibold text-lg text-primary">
+                                {result.examName || result.testName || result.examination || "Không rõ"}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1 md:mt-0">
+                                {result.resultDate ? result.resultDate.split('T')[0] : ""}
+                              </div>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                              {result.resultValue && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Kết quả khám:</span>
+                                  <span className="flex-1">{result.resultValue}</span>
+                                </div>
+                              )}
+                              {result.conclusion && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Kết luận:</span>
+                                  <span className="flex-1">{result.conclusion}</span>
+                                </div>
+                              )}
+                              {result.doctorName && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Bác sĩ:</span>
+                                  <span className="flex-1">{result.doctorName}</span>
+                                </div>
+                              )}
+                              {result.serviceName && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Dịch vụ:</span>
+                                  <span className="flex-1">{result.serviceName}</span>
+                                </div>
+                              )}
+                              {result.normalRange && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Khoảng bình thường:</span>
+                                  <span className="flex-1">{result.normalRange}</span>
+                                </div>
+                              )}
+                              {result.examName && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Tên lần khám:</span>
+                                  <span className="flex-1">{result.examName}</span>
+                                </div>
+                              )}
+                              {result.testName && (
+                                <div className="flex py-2">
+                                  <span className="w-40 font-medium text-gray-700">Tên xét nghiệm:</span>
+                                  <span className="flex-1">{result.testName}</span>
+                                </div>
+                              )}
+                              {/* Thêm các trường khác nếu muốn */}
+                            </div>
+                          </div>
+                        ))
+                      )
+                    ) : (
+                      examResults.map((exam) => {
+                        const hasResult = !!medicalResultsByExamId[exam.examId]?.resultId;
+                        return (
+                          <div key={exam.examId} className="border rounded-lg p-4 mb-3 bg-white">
+                            <div className="font-semibold text-base mb-1">
+                              {exam.examination || exam.name || "Không rõ"}
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-2">
+                              {exam.examDate ? exam.examDate.split('T')[0] : ""}
+                            </div>
+                            {/* Nếu là Doctor thì hiện nút sửa/tạo mới */}
+                            {user?.role === "Doctor" && (
+                              <>
+                                {!hasResult && (
+                                  <Button size="sm" onClick={() => handleShowMedicalResultForm(exam.examId)}>
+                                    Tạo mới kết quả y khoa
+                                  </Button>
+                                )}
+                                {hasResult && (
+                                  <Button size="sm" onClick={() => handleShowMedicalResultForm(exam.examId)}>
+                                    Sửa kết quả y khoa
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            {/* Nếu là Customer thì chỉ hiện kết quả, không có nút */}
+                            {user?.role === "Customer" && hasResult && (
+                              <div className="mt-2 p-3 bg-gray-50 rounded border">
+                                <div><b>Giá trị:</b> {medicalResultsByExamId[exam.examId]?.resultValue}</div>
+                                <div><b>Ngày kết quả:</b> {medicalResultsByExamId[exam.examId]?.resultDate}</div>
+                                <div><b>Kết luận:</b> {medicalResultsByExamId[exam.examId]?.conclusion}</div>
+                                <div><b>Bác sĩ:</b> {medicalResultsByExamId[exam.examId]?.doctorName}</div>
+                              </div>
+                            )}
+                            {/* Nếu là Customer và chưa có result thì có thể hiện thông báo */}
+                            {user?.role === "Customer" && !hasResult && (
+                              <div className="mt-2 text-muted-foreground italic">Chưa có kết quả y khoa cho lần khám này.</div>
+                            )}
+                            {/* Form sửa/tạo chỉ cho Doctor */}
+                            {user?.role === "Doctor" && showMedicalResultForm === exam.examId && (
+                              <MedicalResultForm
+                                key={exam.examId + '-' + (medicalResultsByExamId[exam.examId]?.resultId || '')}
+                                exam={exam}
+                                initialData={medicalResultsByExamId[exam.examId] || null}
+                                onClose={() => setShowMedicalResultForm(null)}
+                                onSuccess={() => {
+                                  alert("Lưu kết quả thành công!");
+                                  setShowMedicalResultForm(null);
+                                  getMedicalResultsByExam(exam.examId).then(res => {
+                                    setMedicalResultsByExamId(prev => ({
+                                      ...prev,
+                                      [exam.examId]: res.data.data && res.data.data.length > 0 ? res.data.data[0] : null
+                                    }));
+                                  });
+                                }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -444,17 +582,6 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
             </TabsContent>
           </Tabs>
         </div>
-
-        {showMedicalResultForm && (
-          <MedicalResultForm
-            exam={examResults.find(e => e.examId === showMedicalResultForm)} // truyền object exam
-            onClose={() => setShowMedicalResultForm(null)}
-            onSuccess={() => {
-              alert("Tạo kết quả thành công!");
-              setShowMedicalResultForm(null);
-            }}
-          />
-        )}
 
         <div className="flex justify-end mt-6">
           <Button onClick={onClose}>Đóng</Button>
@@ -1367,10 +1494,33 @@ const MedicalResultForm = ({ exam, onClose, onSuccess, initialData }: {
 }) => {
   const [form, setForm] = useState({
     resultValue: initialData?.resultValue || "",
-    resultDate: initialData?.resultDate || new Date().toISOString().split("T")[0],
+    resultDate: initialData?.resultDate
+      ? (typeof initialData.resultDate === "string"
+          ? initialData.resultDate.split("T")[0]
+          : new Date(initialData.resultDate).toISOString().split("T")[0])
+      : new Date().toISOString().split("T")[0],
     conclusion: initialData?.conclusion || ""
   });
+
+  // Đồng bộ lại state khi initialData thay đổi
+  useEffect(() => {
+    setForm({
+      resultValue: initialData?.resultValue || "",
+      resultDate: initialData?.resultDate
+        ? (typeof initialData.resultDate === "string"
+            ? initialData.resultDate.split("T")[0]
+            : new Date(initialData.resultDate).toISOString().split("T")[0])
+        : new Date().toISOString().split("T")[0],
+      conclusion: initialData?.conclusion || ""
+    });
+  }, [initialData]);
+
+  useEffect(() => {
+    console.log("form state:", form);
+  }, [form]);
+
   const [loading, setLoading] = useState(false);
+  const isEdit = !!initialData && !!initialData.resultId;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -1380,15 +1530,25 @@ const MedicalResultForm = ({ exam, onClose, onSuccess, initialData }: {
     e.preventDefault();
     setLoading(true);
     try {
-      await createMedicalResult({
-        examId: Number(exam.examId),
-        resultValue: form.resultValue,
-        resultDate: form.resultDate,
-        conclusion: form.conclusion
-      });
+      if (isEdit) {
+        // Sửa: chỉ gửi các trường resultValue, resultDate, conclusion
+        await updateMedicalResult(initialData.resultId, {
+          resultValue: form.resultValue,
+          resultDate: form.resultDate,
+          conclusion: form.conclusion
+        });
+      } else {
+        // Tạo mới: gửi examId + các trường còn lại
+        await createMedicalResult({
+          examId: Number(exam.examId),
+          resultValue: form.resultValue,
+          resultDate: form.resultDate,
+          conclusion: form.conclusion
+        });
+      }
       onSuccess?.();
     } catch (err) {
-      alert("Lỗi khi tạo kết quả!");
+      alert("Lỗi khi lưu kết quả!");
     } finally {
       setLoading(false);
     }
@@ -1404,7 +1564,9 @@ const MedicalResultForm = ({ exam, onClose, onSuccess, initialData }: {
         >
           <X size={22} />
         </button>
-        <h3 className="text-xl font-bold mb-6 text-center">{initialData ? "Sửa kết quả y khoa" : "Nhập kết quả y khoa"}</h3>
+        <h3 className="text-xl font-bold mb-6 text-center">
+          {isEdit ? "Sửa kết quả y khoa" : "Nhập kết quả y khoa"}
+        </h3>
         {/* Thông tin lần khám */}
         <div className="mb-4 p-3 bg-gray-50 rounded border">
           <div><b>Tên lần khám:</b> {exam?.examination || exam?.name || "Không rõ"}</div>
@@ -1457,7 +1619,7 @@ const MedicalResultForm = ({ exam, onClose, onSuccess, initialData }: {
               disabled={loading}
               className="bg-primary text-white min-w-[80px]"
             >
-              {loading ? "Đang lưu..." : initialData ? "Lưu" : "Tạo mới"}
+              {loading ? "Đang lưu..." : isEdit ? "Lưu" : "Tạo mới"}
             </Button>
           </div>
         </form>
