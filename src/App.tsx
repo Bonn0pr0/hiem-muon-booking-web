@@ -22,6 +22,8 @@ import OnlineConsultation from "./pages/OnlineConsultation";
 import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
+import InvoicePage from "./pages/InvoicePage";
+import InvoiceListPage from "./pages/InvoiceListPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,8 @@ const App = () => {
               <Route path="/treatment-history" element={<TreatmentHistory />} />
               <Route path="/online-consultation" element={<OnlineConsultation />} />
               <Route path="/payment" element={<Payment />} />
+              <Route path="/invoice" element={<InvoicePage />} />
+              <Route path="/invoices" element={<InvoiceListPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

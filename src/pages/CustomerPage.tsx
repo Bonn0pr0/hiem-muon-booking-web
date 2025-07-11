@@ -213,20 +213,37 @@ const CustomerPage = () => {
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="font-semibold text-lg">{booking.serviceName}</h3>
                           {getStatusBadge(booking.status)}
+                          {/* Badge thanh toán */}
+                          {booking.invoiceStatus === "PAID" ? (
+                            <Badge className="bg-green-100 text-green-800">Đã thanh toán</Badge>
+                          ) : (
+                            <Badge className="bg-yellow-100 text-yellow-800">Chưa thanh toán</Badge>
+                          )}
                         </div>
                         <p className="text-muted-foreground mb-1">👨‍⚕️ {booking.doctorName}</p>
                         <p className="text-muted-foreground">🕐 {booking.appointmentTime}</p>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col space-y-2 items-end">
+                        {/* Nếu chưa thanh toán thì hiện nút */}
+                        {booking.invoiceStatus !== "PAID" && (
+                          <Button
+                            size="sm"
+                            className="bg-primary text-white"
+                            onClick={() => navigate('/invoice', { state: { booking } })}
+                          >
+                            Thanh toán ngay
+                          </Button>
+                        )}
+                        {/* Các nút khác giữ nguyên */}
                         {booking.status === 'upcoming' && (
-                          <>
+                          <div className="flex space-x-2">
                             <Button variant="outline" size="sm">
                               Đổi lịch
                             </Button>
                             <Button variant="outline" size="sm">
                               Hủy lịch
                             </Button>
-                          </>
+                          </div>
                         )}
                         {booking.status === 'completed' && (
                           <Button variant="outline" size="sm">

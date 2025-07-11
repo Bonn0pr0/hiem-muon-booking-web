@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -73,6 +74,9 @@ const Payment = () => {
       <Badge className="bg-yellow-100 text-yellow-800">Đang xử lý</Badge>
     );
   };
+
+  const location = useLocation();
+  const booking = location.state?.booking;
 
   return (
     <div className="min-h-screen bg-secondary/10">

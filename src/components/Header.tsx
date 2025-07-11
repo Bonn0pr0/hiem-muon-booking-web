@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ReceiptText } from "lucide-react"; // hoặc icon khác
 
 const Header = () => {
   const navigate = useNavigate();
@@ -92,6 +93,17 @@ const Header = () => {
               >
                 Liên hệ
               </button>
+              {role === "customer" && (
+                <button
+                  onClick={() => navigate('/invoice')}
+                  className={`text-sm font-medium flex items-center space-x-1 transition-colors hover:text-primary ${
+                    isActive('/invoice') ? 'text-primary' : 'text-muted-foreground'
+                  }`}
+                >
+                  <ReceiptText className="w-4 h-4 mr-1" />
+                  Hóa đơn
+                </button>
+              )}
             </nav>
           )}
 

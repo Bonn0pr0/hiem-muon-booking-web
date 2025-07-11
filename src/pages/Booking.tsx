@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { treatmentServiceApi } from "@/api/treatmentService";
 import { doctorServiceApi } from "@/api/doctorService";
 import { bookingApi } from "@/api/bookingApi";
+import { useNavigate } from "react-router-dom";
 
 // Khai báo các khung giờ hẹn
 const timeSlots = [
@@ -25,6 +26,7 @@ const timeSlots = [
 
 const Booking = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [formData, setFormData] = useState({
     doctor: '',
@@ -121,14 +123,8 @@ const Booking = () => {
         title: "Đặt lịch thành công",
         description: `Đã đặt lịch khám ngày ${format(selectedDate, 'dd/MM/yyyy', { locale: vi })} lúc ${formData.time}`,
       });
-      // Reset form
-      setFormData({
-        doctor: '',
-        service: '',
-        time: '',
-        notes: ''
-      });
-      setSelectedDate(undefined);
+      // Chuyển sang trang hóa đơn, truyền thông tin booking
+      navigate("/invoice", { state: { booking: payload } });
     } catch (error: any) {
       toast({
         title: "Lỗi đặt lịch",

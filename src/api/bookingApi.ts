@@ -12,6 +12,9 @@ const bookingApi = {
   },
   getByCustomerId: async (customerId) => {
     return api.get(`/api/bookings/customer/${customerId}`);
+  },
+  getById: async (id: number) => {
+    return api.get(`/api/bookings/${id}`);
   }
 };
 
