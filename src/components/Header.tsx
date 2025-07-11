@@ -46,8 +46,8 @@ const Header = () => {
               onClick={() => navigate('/')}
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">♡</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-white-400 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-pink-500 text-3xl">❤️</span>
               </div>
               <span className="text-xl font-bold text-foreground">FertilityCare</span>
             </button>

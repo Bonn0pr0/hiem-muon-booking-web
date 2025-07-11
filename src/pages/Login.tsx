@@ -70,7 +70,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
-            <Heart className="h-10 w-10 text-pink-500" />
+            <span className="text-pink-500 text-3xl">❤️</span>
             <span className="text-2xl font-bold text-gray-900">FertilityCare</span>
           </Link>
         </div>

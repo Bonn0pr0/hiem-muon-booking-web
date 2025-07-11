@@ -90,8 +90,8 @@ const Register = () => {
             onClick={() => navigate('/')}
             className="flex items-center justify-center space-x-2 mb-4 mx-auto hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">♡</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-white-400 to-pink-500 rounded-full flex items-center justify-center">
+              <span className="text-pink-500 text-3xl">❤️</span>
             </div>
             <span className="text-xl font-bold">FertilityCare</span>
           </button>
