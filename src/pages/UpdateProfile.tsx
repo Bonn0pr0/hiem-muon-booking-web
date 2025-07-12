@@ -1,24 +1,48 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUserById, updateUser } from "@/api/userService";
 
 const UpdateProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, login } = useAuth(); // Thêm login để cập nhật context
 
   const [formData, setFormData] = useState({
-    name: "Nguyễn Thị Lan",
-    email: "lan.nguyen@email.com",
-    phone: "0901234567",
-    address: "123 Đường ABC, Quận 1, TP.HCM",
-    dateOfBirth: "1990-05-15",
-    emergencyContact: "0912345678"
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    age: "",
+    gender: ""
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    getUserById(user.id)
+      .then(res => {
+        const data = res.data.data;
+        setFormData({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+          age: data.age ? String(data.age) : "",
+          gender: data.gender || ""
+        });
+        console.log("User detail from API:", data);
+      })
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  if (loading) return <div>Đang tải thông tin...</div>;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -27,13 +51,36 @@ const UpdateProfile = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Cập nhật thành công!",
-      description: "Thông tin cá nhân đã được cập nhật."
-    });
-    navigate('/dashboard/customer');
+    if (!user?.id) return;
+    // Chỉ gửi các trường BE hỗ trợ update
+    const updateData = {
+      id: user.id,
+      name: formData.name,
+      phone: formData.phone,
+      age: formData.age ? Number(formData.age) : undefined,
+      gender: formData.gender,
+      address: formData.address
+    };
+    try {
+      await updateUser(updateData);
+      // Lấy lại thông tin user mới nhất và cập nhật context
+      const updatedUserRes = await getUserById(user.id);
+      if (updatedUserRes?.data?.data) {
+        login(updatedUserRes.data.data);
+      }
+      toast({
+        title: "Cập nhật thành công!",
+        description: "Thông tin cá nhân đã được cập nhật."
+      });
+      navigate('/dashboard/customer');
+    } catch (error) {
+      toast({
+        title: "Cập nhật thất bại!",
+        description: "Vui lòng thử lại."
+      });
+    }
   };
 
   return (
@@ -77,8 +124,7 @@ const UpdateProfile = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
@@ -92,16 +138,29 @@ const UpdateProfile = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Ngày sinh</Label>
+                  <Label htmlFor="age">Tuổi</Label>
                   <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                    id="age"
+                    type="number"
+                    value={formData.age}
+                    onChange={(e) => handleInputChange('age', e.target.value)}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Giới tính</Label>
+                  <select
+                    id="gender"
+                    value={formData.gender}
+                    onChange={e => handleInputChange('gender', e.target.value)}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  >
+                    <option value="">Chọn giới tính</option>
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                  </select>
+                </div>
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="address">Địa chỉ</Label>
                 <Input
@@ -111,17 +170,6 @@ const UpdateProfile = () => {
                   onChange={(e) => handleInputChange('address', e.target.value)}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emergencyContact">Số điện thoại người thân (khẩn cấp)</Label>
-                <Input
-                  id="emergencyContact"
-                  type="tel"
-                  value={formData.emergencyContact}
-                  onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                />
-              </div>
-
               <div className="flex gap-4 pt-4">
                 <Button type="submit" className="bg-primary hover:bg-primary/90">
                   Cập nhật thông tin

@@ -7,9 +7,12 @@ import PatientProfile from "@/components/PatientProfile";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookingApi } from "@/api/bookingApi";
+import { invoiceApi } from "@/api/invoiceApi";
+import { useToast } from "@/hooks/use-toast";
 
 const CustomerPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPatientProfile, setShowPatientProfile] = useState(false);
   const { user } = useAuth();
   const userId = user?.id;
@@ -17,13 +20,7 @@ const CustomerPage = () => {
   const [loading, setLoading] = useState(true);
 
   // Mock user data - in real app this would come from auth context
-  const userData = {
-    name: "Nguyễn Thị Mai",
-    membershipLevel: "VIP",
-    email: "mai.nguyen@email.com",
-    phone: "0901234567",
-    memberSince: "2024-01-15"
-  };
+  
 
   const services = [
     {
@@ -122,6 +119,40 @@ const CustomerPage = () => {
     }
   };
 
+  // Function xử lý thanh toán thông minh
+  const handlePayment = async (booking: any) => {
+    try {
+      // Kiểm tra xem đã có invoice chưa
+      const invoiceRes = await invoiceApi.getByBookingId(booking.id);
+      const invoice = invoiceRes.data;
+      
+      if (invoice) {
+        // Nếu đã có invoice, chuyển đến danh sách hóa đơn
+        toast({
+          title: "Đã có hóa đơn cho booking này",
+          description: "Chuyển đến trang danh sách hóa đơn để thanh toán",
+          variant: "default"
+        });
+        navigate("/invoices");
+      } else {
+        // Nếu chưa có invoice, chuyển đến trang tạo hóa đơn
+        navigate('/invoice', { state: { booking } });
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        // Không tìm thấy invoice, chuyển đến trang tạo hóa đơn
+        navigate('/invoice', { state: { booking } });
+      } else {
+        // Lỗi khác, hiển thị thông báo
+        toast({
+          title: "Lỗi khi kiểm tra hóa đơn",
+          description: "Vui lòng thử lại sau",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     setLoading(true);
@@ -147,13 +178,8 @@ const CustomerPage = () => {
               <NotificationBell />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Chào mừng trở lại, <span className="text-primary">{userData.name}</span>!
+              Chào mừng trở lại, <span className="text-primary">{user?.name || "Khách hàng"}</span>!
             </h1>
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                Thành viên {userData.membershipLevel}
-              </Badge>
-            </div>
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
               Chúng tôi rất vui được đồng hành cùng bạn trên hành trình mang thai hạnh phúc.
             </p>
@@ -229,7 +255,7 @@ const CustomerPage = () => {
                           <Button
                             size="sm"
                             className="bg-primary text-white"
-                            onClick={() => navigate('/invoice', { state: { booking } })}
+                            onClick={() => handlePayment(booking)}
                           >
                             Thanh toán ngay
                           </Button>
@@ -362,7 +388,7 @@ const CustomerPage = () => {
 
       {/* Patient Profile Modal */}
       <PatientProfile 
-        patient={userData}
+        patient={user}
         isOpen={showPatientProfile}
         onClose={() => setShowPatientProfile(false)}
         isReadOnly={true}
