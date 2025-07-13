@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [feedbacks, setFeedbacks] = useState([
+    {
+      id: 1,
+      name: "Nguyễn Văn A",
+      date: "2024-06-10",
+      stars: 5,
+      comment: "Dịch vụ rất tốt!",
+      status: "visible"
+    },
+    {
+      id: 2,
+      name: "Trần Thị B",
+      date: "2024-06-12",
+      stars: 4,
+      comment: "Bác sĩ tận tình, sẽ quay lại.",
+      status: "hidden"
+    }
+  ]);
 
   const stats = [
     {
@@ -77,6 +94,22 @@ const ManagerDashboard = () => {
     }
   };
 
+  const handleToggleStatus = (id: number) => {
+    setFeedbacks(prev =>
+      prev.map(fb =>
+        fb.id === id
+          ? { ...fb, status: fb.status === "visible" ? "hidden" : "visible" }
+          : fb
+      )
+    );
+  };
+
+  const getStatusBadge = (status: string) => {
+    return status === "visible"
+      ? <Badge className="bg-green-100 text-green-800 cursor-pointer">Hiện</Badge>
+      : <Badge className="bg-gray-100 text-gray-800 cursor-pointer">Ẩn</Badge>;
+  };
+
   return (
     <div className="min-h-screen bg-secondary/10">
       <div className="container mx-auto px-4 py-8">
@@ -108,79 +141,12 @@ const ManagerDashboard = () => {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="staff">Quản lý Bác sĩ</TabsTrigger> 
             <TabsTrigger value="customers">Quản lý Khách hàng</TabsTrigger>
             <TabsTrigger value="appointments">Lịch làm việc</TabsTrigger>
+            <TabsTrigger value="feedbacks">Quản lý Feedback</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* System Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quản lý hệ thống</CardTitle>
-              </CardHeader>
-              <CardContent className="grid md:grid-cols-2 gap-3">
-                <Button variant="outline" className="justify-start">
-                  📊 Báo cáo doanh thu
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  🏥 Quản lý dịch vụ
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  ⚙️ Cài đặt hệ thống
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  📈 Thống kê và báo cáo
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Appointments */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Lịch hẹn gần đây</CardTitle>
-                <CardDescription>
-                  Theo dõi và quản lý các lịch hẹn trong hệ thống
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentAppointments.map((appointment) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                          <p className="font-medium">{appointment.customer}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Bác sĩ</p>
-                          <p className="font-medium">{appointment.doctor}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Dịch vụ</p>
-                          <p className="font-medium">{appointment.service}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Thời gian</p>
-                          <p className="font-medium">{appointment.date} {appointment.time}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(appointment.status)}>
-                          {appointment.statusText}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          Chi tiết
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="staff">
             <StaffManagement />
@@ -192,6 +158,54 @@ const ManagerDashboard = () => {
 
           <TabsContent value="appointments">
             <ScheduleManagement />
+          </TabsContent>
+
+          <TabsContent value="feedbacks">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý Feedback</CardTitle>
+                <CardDescription>
+                  Xem và quản lý phản hồi của khách hàng
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-2 text-left">Họ và tên</th>
+                        <th className="px-4 py-2 text-left">Ngày</th>
+                        <th className="px-4 py-2 text-left">Số sao</th>
+                        <th className="px-4 py-2 text-left">Bình luận</th>
+                        <th className="px-4 py-2 text-left">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {feedbacks.map(fb => (
+                        <tr key={fb.id} className="border-b">
+                          <td className="px-4 py-2">{fb.name}</td>
+                          <td className="px-4 py-2">{fb.date}</td>
+                          <td className="px-4 py-2">
+                            {Array.from({ length: fb.stars }).map((_, i) => (
+                              <span key={i} className="text-yellow-400">★</span>
+                            ))}
+                            {Array.from({ length: 5 - fb.stars }).map((_, i) => (
+                              <span key={i} className="text-gray-300">★</span>
+                            ))}
+                          </td>
+                          <td className="px-4 py-2">{fb.comment}</td>
+                          <td className="px-4 py-2">
+                            <span onClick={() => handleToggleStatus(fb.id)}>
+                              {getStatusBadge(fb.status)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

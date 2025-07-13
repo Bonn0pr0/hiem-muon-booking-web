@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,8 +47,9 @@ const StaffManagement = () => {
     }
   ]);
 
-  const [editingStaff, setEditingStaff] = useState(null);
+  const [editingStaff, setEditingStaff] = useState<any>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newStaff, setNewStaff] = useState({
     name: "",
     email: "",
@@ -58,6 +58,9 @@ const StaffManagement = () => {
     phone: "",
     experience: ""
   });
+  const [search, setSearch] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<any>(null);
 
   const toggleStaffStatus = (id: number) => {
     setStaffList(staffList.map(staff => 
@@ -117,13 +120,75 @@ const StaffManagement = () => {
     });
   };
 
+  const handleEditClick = (staff: any) => {
+    setEditingStaff(staff);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditChange = (field: string, value: string) => {
+    setEditingStaff({ ...editingStaff, [field]: value });
+  };
+
+  const saveEditStaff = () => {
+    if (!editingStaff.name || !editingStaff.email || !editingStaff.role) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive"
+      });
+      return;
+    }
+    setStaffList(staffList.map(s => s.id === editingStaff.id ? { ...editingStaff } : s));
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Cập nhật nhân viên thành công",
+      description: `${editingStaff.name} đã được cập nhật`,
+    });
+  };
+
+  const handleDeleteClick = (staff: any) => {
+    setStaffToDelete(staff);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteStaff = () => {
+    if (staffToDelete) {
+      setStaffList(staffList.filter(staff => staff.id !== staffToDelete.id));
+      toast({
+        title: "Xóa nhân viên",
+        description: `${staffToDelete.name} đã được xóa khỏi hệ thống`,
+        variant: "destructive"
+      });
+    }
+    setDeleteConfirmOpen(false);
+    setStaffToDelete(null);
+  };
+
+  // Lọc staffList theo search
+  const filteredStaffList = staffList.filter(staff =>
+    [staff.name, staff.email, staff.role, staff.department, staff.phone]
+      .some(field => field?.toLowerCase().includes(search.toLowerCase()))
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <UserIcon className="w-5 h-5" />
-            <span>Quản lý Nhân viên</span>
+            <span>Quản lý Bác sĩ ({staffList.length})</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-1"
+              onClick={() => {
+                if (filteredStaffList.length > 0) handleEditClick(filteredStaffList[0]);
+              }}
+              title="Sửa thông tin nhân viên đầu tiên (demo)"
+              style={{ display: "none" }} // Ẩn nút này, chỉ giữ lại nút sửa ở từng dòng nhân viên
+            >
+              <EditIcon className="w-4 h-4" />
+            </Button>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -208,12 +273,22 @@ const StaffManagement = () => {
           </Dialog>
         </CardTitle>
         <CardDescription>
-          Quản lý nhân viên và phân công công việc
+          Quản lý bác sĩ và phân công công việc
         </CardDescription>
+        {/* Thanh tìm kiếm */}
+        <div className="mt-4 flex">
+          <div className="max-w-xs w-full">
+            <Input
+              placeholder="Tìm kiếm theo tên, email, chức vụ, khoa, số điện thoại..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {staffList.map((staff) => (
+          {filteredStaffList.map((staff) => (
             <div key={staff.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
@@ -245,16 +320,113 @@ const StaffManagement = () => {
                 >
                   {staff.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
                 </Badge>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => handleEditClick(staff)}>
                   <EditIcon className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => deleteStaff(staff.id)}>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteClick(staff)}>
                   <Trash2Icon className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           ))}
         </div>
+        {/* Dialog xác nhận xóa nhân viên */}
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa khách hàng này?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                Không
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteStaff}>
+                Có
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* Dialog chỉnh sửa nhân viên */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa thông tin nhân viên</DialogTitle>
+              <DialogDescription>
+                Cập nhật thông tin nhân viên
+              </DialogDescription>
+            </DialogHeader>
+            {editingStaff && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Họ và tên *</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingStaff.name}
+                    onChange={e => handleEditChange("name", e.target.value)}
+                    placeholder="Nhập họ và tên"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-email">Email *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editingStaff.email}
+                    onChange={e => handleEditChange("email", e.target.value)}
+                    placeholder="Nhập email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-role">Chức vụ *</Label>
+                  <Select value={editingStaff.role} onValueChange={value => handleEditChange("role", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn chức vụ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bác sĩ chính">Bác sĩ chính</SelectItem>
+                      <SelectItem value="Bác sĩ">Bác sĩ</SelectItem>
+                      <SelectItem value="Y tá">Y tá</SelectItem>
+                      <SelectItem value="Kỹ thuật viên">Kỹ thuật viên</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-department">Khoa</Label>
+                  <Input
+                    id="edit-department"
+                    value={editingStaff.department}
+                    onChange={e => handleEditChange("department", e.target.value)}
+                    placeholder="Nhập khoa"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-phone">Số điện thoại</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editingStaff.phone}
+                    onChange={e => handleEditChange("phone", e.target.value)}
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-experience">Kinh nghiệm</Label>
+                  <Input
+                    id="edit-experience"
+                    value={editingStaff.experience}
+                    onChange={e => handleEditChange("experience", e.target.value)}
+                    placeholder="Ví dụ: 5 năm"
+                  />
+                </div>
+                <Button onClick={saveEditStaff} className="w-full bg-primary hover:bg-primary/90">
+                  Lưu thay đổi
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
