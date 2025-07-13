@@ -68,12 +68,9 @@ const InvoiceListPage = () => {
   };
 
   const handlePayment = (invoice: any) => {
-    // Chuyển đến trang thanh toán với thông tin invoice
+    // Chuyển đến trang thanh toán với thông tin invoice thật
     navigate('/payment', { 
-      state: { 
-        invoice,
-        booking: { id: invoice.bookingId }
-      } 
+      state: { invoice } // truyền toàn bộ object invoice
     });
   };
 

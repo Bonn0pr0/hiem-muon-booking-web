@@ -1,138 +1,121 @@
-
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import QRCodePayment from "@/components/QRCodePayment";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
 
 const Payment = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const [selectedService, setSelectedService] = useState("");
+  const invoice = location.state?.invoice;
+  const booking = location.state?.booking;
+
+  // Thêm dòng này để log ra console
+  console.log("Invoice truyền sang Payment:", invoice);
+
+  // Lấy thông tin dịch vụ và giá từ invoice hoặc booking
+  const serviceName = invoice?.serviceName || booking?.serviceName || booking?.service || "Dịch vụ y tế";
+  const amount = invoice?.totalAmount || booking?.price || 0;
+  const status = invoice?.status || "PENDING";
+
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [showQRCode, setShowQRCode] = useState(false);
 
-  const services = [
-    { id: 1, name: "IVF - Thu tinh ống nghiệm", price: 50000000, category: "Cao cấp" },
-    { id: 2, name: "IUI - Thu tinh trong tử cung", price: 15000000, category: "Nâng cao" },
-    { id: 3, name: "Tư vấn và khám sàng lọc", price: 500000, category: "Cơ bản" },
-    { id: 4, name: "Xét nghiệm hormone", price: 800000, category: "Cơ bản" },
-    { id: 5, name: "Siêu âm chuyên sâu", price: 1200000, category: "Nâng cao" }
-  ];
+  // Sau khi đã fetch invoice từ backend:
+  const bookingId = invoice?.booking?.bookingId;
 
-  const paymentHistory = [
-    {
-      id: 1,
-      date: "2024-06-15",
-      service: "IVF - Thu tinh ống nghiệm",
-      amount: 50000000,
-      status: "completed",
-      method: "Thẻ tín dụng"
-    },
-    {
-      id: 2,
-      date: "2024-05-28",
-      service: "Tư vấn và khám sàng lọc",
-      amount: 500000,
-      status: "completed", 
-      method: "Chuyển khoản"
+  // Bạn có thể dùng bookingId cho các mục đích khác, ví dụ:
+  console.log("Booking ID lấy từ invoice:", bookingId);
+
+  useEffect(() => {
+    if (!invoice) {
+      toast({
+        title: "Không tìm thấy hóa đơn",
+        description: "Vui lòng chọn hóa đơn từ danh sách để thanh toán.",
+        variant: "destructive"
+      });
+      navigate("/invoices");
     }
-  ];
+  }, [invoice, navigate, toast]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { 
-      style: 'currency', 
-      currency: 'VND' 
-    }).format(price);
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'PAID':
+        return <Badge className="bg-green-100 text-green-800">Đã thanh toán</Badge>;
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Chờ thanh toán</Badge>;
+      case 'CANCELLED':
+        return <Badge className="bg-red-100 text-red-800">Đã hủy</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">Chưa xác định</Badge>;
+    }
   };
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedService || !paymentMethod) {
+    if (!paymentMethod) {
       toast({
-        title: "Vui lòng chọn đầy đủ thông tin",
-        description: "Hãy chọn dịch vụ và phương thức thanh toán.",
+        title: "Vui lòng chọn phương thức thanh toán",
         variant: "destructive"
       });
       return;
     }
-
-    toast({
-      title: "Thanh toán thành công!",
-      description: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi."
-    });
+    if (paymentMethod === 'QR Code') {
+      setShowQRCode(true);
+    } else {
+      toast({
+        title: "Thanh toán thành công!",
+        description: "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi."
+      });
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    return status === 'completed' ? (
-      <Badge className="bg-green-100 text-green-800">Hoàn thành</Badge>
-    ) : (
-      <Badge className="bg-yellow-100 text-yellow-800">Đang xử lý</Badge>
-    );
-  };
-
-  const location = useLocation();
-  const booking = location.state?.booking;
+  const isPaid = status?.toUpperCase() === 'PAID';
 
   return (
-    <div className="min-h-screen bg-secondary/10">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-secondary/10 py-8">
+      <div className="container mx-auto px-4 max-w-2xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Thanh toán dịch vụ</h1>
-          <p className="text-muted-foreground">
-            Thanh toán cho các dịch vụ y tế
-          </p>
+          <p className="text-muted-foreground">Thanh toán cho các dịch vụ y tế</p>
         </div>
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Form thanh toán */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thanh toán mới</CardTitle>
-              <CardDescription>Chọn dịch vụ và phương thức thanh toán</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin hóa đơn</CardTitle>
+            <CardDescription>Kiểm tra thông tin trước khi thanh toán</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
+                <span className="font-medium">Dịch vụ:</span>
+                <span>{serviceName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Số tiền:</span>
+                <span className="font-bold text-primary">{formatPrice(amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Mã hóa đơn:</span>
+                <span className="font-mono">#{invoice?.invoiceId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Trạng thái:</span>
+                {getStatusBadge(status)}
+              </div>
+            </div>
+            {!isPaid && (
               <form onSubmit={handlePayment} className="space-y-6">
                 <div>
-                  <Label>Chọn dịch vụ</Label>
-                  <div className="space-y-3 mt-2">
-                    {services.map((service) => (
-                      <div key={service.id} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id={`service-${service.id}`}
-                          name="service"
-                          value={service.name}
-                          checked={selectedService === service.name}
-                          onChange={(e) => setSelectedService(e.target.value)}
-                        />
-                        <label 
-                          htmlFor={`service-${service.id}`}
-                          className="flex-1 cursor-pointer"
-                        >
-                          <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-secondary/50">
-                            <div>
-                              <span className="font-medium">{service.name}</span>
-                              <p className="text-sm text-muted-foreground">{service.category}</p>
-                            </div>
-                            <span className="font-bold text-primary">
-                              {formatPrice(service.price)}
-                            </span>
-                          </div>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Phương thức thanh toán</Label>
+                  <span className="font-medium">Chọn phương thức thanh toán</span>
                   <div className="space-y-2 mt-2">
                     {[
+                      { id: 'qr', name: 'QR Code', desc: 'Quét mã QR để thanh toán' },
                       { id: 'credit', name: 'Thẻ tín dụng', desc: 'Visa, Mastercard' },
                       { id: 'bank', name: 'Chuyển khoản ngân hàng', desc: 'Chuyển khoản trực tiếp' },
                       { id: 'cash', name: 'Tiền mặt', desc: 'Thanh toán tại cơ sở' }
@@ -156,66 +139,28 @@ const Payment = () => {
                     ))}
                   </div>
                 </div>
-
-                {paymentMethod === 'Thẻ tín dụng' && (
-                  <div className="space-y-4 p-4 border rounded-lg bg-secondary/20">
-                    <div>
-                      <Label htmlFor="cardNumber">Số thẻ</Label>
-                      <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="expiry">Ngày hết hạn</Label>
-                        <Input id="expiry" placeholder="MM/YY" />
-                      </div>
-                      <div>
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input id="cvv" placeholder="123" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  Thanh toán ngay
+                  {paymentMethod === 'QR Code' ? 'Tạo QR Code' : 'Thanh toán ngay'}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-
-          {/* Lịch sử thanh toán */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Lịch sử thanh toán</CardTitle>
-              <CardDescription>Các giao dịch đã thực hiện</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {paymentHistory.map((payment) => (
-                  <div key={payment.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-medium">{payment.service}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {payment.date} • {payment.method}
-                        </p>
-                      </div>
-                      {getStatusBadge(payment.status)}
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-primary">
-                        {formatPrice(payment.amount)}
-                      </span>
-                      <Button variant="outline" size="sm">
-                        Xem chi tiết
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            )}
+            {showQRCode && paymentMethod === 'QR Code' && (
+              <div className="mt-8">
+                <QRCodePayment
+                  invoiceId={invoice.invoiceId}
+                  amount={amount}
+                  serviceName={serviceName}
+                  onPaymentComplete={() => setShowQRCode(false)}
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+            {isPaid && (
+              <div className="text-center text-green-600 font-semibold mt-6">
+                Hóa đơn này đã được thanh toán.
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
