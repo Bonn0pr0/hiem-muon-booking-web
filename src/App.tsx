@@ -21,6 +21,9 @@ import TreatmentHistory from "./pages/TreatmentHistory";
 import OnlineConsultation from "./pages/OnlineConsultation";
 import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import GoogleCallback from "./pages/GoogleCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
 import InvoicePage from "./pages/InvoicePage";
 import InvoiceListPage from "./pages/InvoiceListPage";
@@ -40,6 +43,9 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/google/callback" element={<GoogleCallback />} />
               <Route path="/booking" element={<Booking />} />
               <Route path="/services" element={<Services />} />
               <Route path="/dashboard/customer" element={<CustomerPage />} />

@@ -25,6 +25,16 @@ export type RegisterRequest = {
   gender?: string;
 };
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
 export const authService = {
   // Đăng nhập
   login: async (data: LoginRequest): Promise<LoginResponse> => {
@@ -32,9 +42,27 @@ export const authService = {
     return response.data;
   },
 
+  // Đăng nhập Google
+  loginWithGoogle: async () => {
+    // Redirect to backend Google OAuth endpoint
+    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/auth/login/google`;
+  },
+
   // Đăng ký
   register: async (data: RegisterRequest) => {
     const response = await api.post('/api/v1/auth/register', data);
+    return response.data;
+  },
+
+  // Quên mật khẩu
+  forgotPassword: async (data: ForgotPasswordRequest) => {
+    const response = await api.post('/api/v1/auth/forgot-password', data);
+    return response.data;
+  },
+
+  // Đặt lại mật khẩu
+  resetPassword: async (data: ResetPasswordRequest) => {
+    const response = await api.post('/api/v1/auth/reset-password', data);
     return response.data;
   },
 
