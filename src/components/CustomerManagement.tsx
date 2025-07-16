@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,42 +15,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getUsersByRole } from "@/api/adminApi";
 
 const CustomerManagement = () => {
   const { toast } = useToast();
   
-  const [customers, setCustomers] = useState([
-    {
-      id: 1,
-      name: "Nguyễn Thị Mai",
-      email: "nguyen.thi.mai@email.com",
-      phone: "0123456789",
-      age: 28,
-      address: "Hà Nội",
-      registrationDate: "15/1/2024",
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Trần Văn Nam",
-      email: "tran.van.nam@email.com",
-      phone: "0987654321",
-      age: 32,
-      address: "TP. Hồ Chí Minh",
-      registrationDate: "20/2/2024",
-      status: "active"
-    },
-    {
-      id: 3,
-      name: "Lê Thị Hoa",
-      email: "le.thi.hoa@email.com",
-      phone: "0456789123",
-      age: 26,
-      address: "Đà Nẵng",
-      registrationDate: "10/3/2024",
-      status: "inactive"
-    }
-  ]);
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    getUsersByRole("Customer").then(res => {
+      // Nếu res.data là object chứa mảng, ví dụ: { data: [...] }
+      // thì phải lấy đúng trường, ví dụ: setCustomers(res.data.data || []);
+      // Nếu res.data là mảng thì dùng trực tiếp
+      setCustomers(Array.isArray(res.data) ? res.data : (res.data.data || []));
+    });
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
@@ -145,7 +124,9 @@ const CustomerManagement = () => {
                   <TableCell>{customer.phone}</TableCell>
                   <TableCell>{customer.age}</TableCell>
                   <TableCell>{customer.address}</TableCell>
-                  <TableCell>{customer.registrationDate}</TableCell>
+                  <TableCell>
+                    {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("vi-VN") : ""}
+                  </TableCell>
                   <TableCell>
                     <button onClick={() => toggleStatus(customer.id)}>
                       {getStatusBadge(customer.status)}
