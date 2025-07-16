@@ -228,7 +228,6 @@ const CustomerPage = () => {
             <h2 className="text-3xl font-bold mb-4">Lịch hẹn của tôi</h2>
             <p className="text-muted-foreground">Theo dõi lịch trình điều trị của bạn</p>
           </div>
-          
           <div className="max-w-4xl mx-auto">
             <div className="grid gap-4">
               {Array.isArray(bookings) && bookings.map((booking) => (
@@ -277,34 +276,6 @@ const CustomerPage = () => {
                           </Button>
                         )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Test Results Section */}
-      <section className="py-10">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Kết quả xét nghiệm gần đây</h2>
-          </div>
-          <div className="max-w-4xl mx-auto">
-            <div className="grid gap-4">
-              {testResults.map((result) => (
-                <Card key={result.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg">{result.type}</h3>
-                      <p className="text-muted-foreground mb-1">{result.doctor}</p>
-                      <p className="text-muted-foreground">{result.date}</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge className="bg-green-100 text-green-800">{result.result}</Badge>
-                      <Button variant="outline" size="sm">Xem chi tiết</Button>
                     </div>
                   </CardContent>
                 </Card>
