@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import api from '@/api/api';
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -19,24 +20,26 @@ const GoogleCallback = () => {
         const email = searchParams.get('email');
         
         if (success === 'true' && email) {
-          // Google OAuth was successful, now get user info from backend
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/auth/account`, {
-            credentials: 'include'
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            login(userData);
-            
-            const role = userData.role || 'Customer';
-            if (role === 'Admin') navigate('/dashboard/admin');
-            else if (role === 'Manager') navigate('/dashboard/manager');
-            else if (role === 'Staff') navigate('/dashboard/staff');
-            else if (role === 'Doctor') navigate('/dashboard/doctor');
-            else navigate('/dashboard/customer');
-          } else {
-            setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
+          const token = searchParams.get('token');
+          if (token) {
+            localStorage.setItem('accessToken', token);
           }
+          // Google OAuth was successful, now get user info from backend
+          const response = await api.get('/api/v1/auth/account');
+          const userData = response.data;
+          if (userData && userData.id) {
+            login(userData); // set vào context + localStorage
+            // ... chuyển hướng dashboard
+          } else {
+            setError('Không lấy được thông tin user. Vui lòng thử lại.');
+          }
+          
+          const role = userData.role || 'Customer';
+          if (role === 'Admin') navigate('/dashboard/admin');
+          else if (role === 'Manager') navigate('/dashboard/manager');
+          else if (role === 'Staff') navigate('/dashboard/staff');
+          else if (role === 'Doctor') navigate('/dashboard/doctor');
+          else navigate('/dashboard/customer');
         } else {
           setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
         }

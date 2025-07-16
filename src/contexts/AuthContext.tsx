@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "@/api/api";
 
 type User = {
   id: number;
@@ -20,8 +21,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    console.log('AuthProvider useEffect, storedUser:', storedUser);
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const accessToken = localStorage.getItem('accessToken');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else if (accessToken) {
+      // Nếu có accessToken mà chưa có user, tự động fetch user Customer từ backend
+      api.get('/api/v1/auth/account')
+        .then(res => {
+          const userData = res.data.data; // <-- phải lấy .data
+          if (userData && userData.id && userData.role === 'Customer') {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        })
+        .catch(() => {
+          setUser(null);
+          localStorage.removeItem('user');
+        });
+    }
   }, []);
 
   const login = (userData: User) => {
