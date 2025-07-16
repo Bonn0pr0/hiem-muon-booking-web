@@ -1,5 +1,3 @@
-
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +13,7 @@ import { getReferenceRange, getAllReferenceRanges } from "@/api/referenceRangeAp
 import { createExamination, getExaminationsByBooking, getExaminationsByCustomer } from "@/api/examinationApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { createMedicalResult, updateMedicalResult, getMedicalResultsByExam, getMedicalResultsByCustomer } from "@/api/medicalResultsApi";
+import { createTreatmentPlan, getTreatmentPlansByBooking } from "@/api/treatmentPlanApi";
 
 interface PatientProfileProps {
   patient: any;
@@ -47,47 +46,7 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
 
   const [examResults, setExamResults] = useState([]);
 
-  const [treatmentPlan, setTreatmentPlan] = useState([
-    {
-      id: 1,
-      phase: "Giai đoạn 1",
-      title: "Chuẩn bị và kích thích buồng trứng",
-      startDate: "2024-06-01",
-      endDate: "2024-06-15",
-      status: "Hoàn thành",
-      activities: [
-        "Xét nghiệm hormone cơ bản",
-        "Siêu âm đánh giá buồng trứng",
-        "Kích thích buồng trứng với Clomiphene"
-      ]
-    },
-    {
-      id: 2,
-      phase: "Giai đoạn 2",
-      title: "Theo dõi phát triển nang noãn",
-      startDate: "2024-06-16",
-      endDate: "2024-06-25",
-      status: "Đang thực hiện",
-      activities: [
-        "Siêu âm theo dõi nang noãn",
-        "Xét nghiệm hormone LH, E2",
-        "Điều chỉnh liều thuốc kích thích"
-      ]
-    },
-    {
-      id: 3,
-      phase: "Giai đoạn 3",
-      title: "Thu thập trứng và thụ tinh",
-      startDate: "2024-06-26",
-      endDate: "2024-06-30",
-      status: "Chưa bắt đầu",
-      activities: [
-        "Tiêm kích thích phóng noãn",
-        "Thu thập trứng",
-        "Thụ tinh trong phòng thí nghiệm"
-      ]
-    }
-  ]);
+  const [treatmentPlan, setTreatmentPlan] = useState<any[]>([]);
 
   const [prescriptions, setPrescriptions] = useState([
     {
@@ -182,10 +141,24 @@ const PatientProfile = ({ patient, isOpen, onClose, isReadOnly = false }: Patien
     setShowAddExam(false);
   };
 
-  const handleAddTreatment = (newTreatment: any) => {
-    const id = Math.max(...treatmentPlan.map(t => t.id)) + 1;
-    setTreatmentPlan(prev => [...prev, { ...newTreatment, id }]);
-    setShowAddTreatment(false);
+  const handleAddTreatment = async (newTreatment: any) => {
+    try {
+      await createTreatmentPlan({
+        bookingId: patient.bookingId,
+        phase: newTreatment.phase,
+        title: newTreatment.title,
+        startDate: newTreatment.startDate,
+        endDate: newTreatment.endDate,
+        status: newTreatment.status,
+        activities: newTreatment.activities, // mảng string
+      });
+      // Refetch sau khi tạo thành công
+      const res = await getTreatmentPlansByBooking(patient.bookingId);
+      setTreatmentPlan(res.data.data || []);
+      setShowAddTreatment(false);
+    } catch (err: any) {
+      alert("Lỗi khi thêm liệu trình: " + (err?.response?.data?.message || err.message));
+    }
   };
 
   const { user } = useAuth();
