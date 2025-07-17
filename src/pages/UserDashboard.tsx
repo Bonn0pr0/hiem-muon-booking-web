@@ -17,12 +17,21 @@ import PatientProfile from "@/components/PatientProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { getExaminationsByCustomer } from "@/api/examinationApi";
 import { useEffect } from "react";
+import { MessageCircle } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { Star } from "lucide-react";
+
+
+
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showDashboard, setShowDashboard] = useState(false);
   const [showPatientProfile, setShowPatientProfile] = useState(false);
   const [testResults, setTestResults] = useState<any[]>([]);
+  const [openFeedback, setOpenFeedback] = useState(false);
+  const [rating, setRating] = useState(0);
+
 
   const { user } = useAuth();
 
@@ -125,7 +134,22 @@ const UserDashboard = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+
+    
   };
+  function StarRating({ rating, setRating }: { rating: number; setRating: (value: number) => void }) {
+  return (
+    <div className="flex space-x-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`w-6 h-6 cursor-pointer ${star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+          onClick={() => setRating(star)}
+        />
+      ))}
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen">
@@ -450,6 +474,67 @@ const UserDashboard = () => {
         onClose={() => setShowPatientProfile(false)}
         isReadOnly={true}
       />
+ <>
+    {/* Nút Feedback */}
+    <div className="fixed bottom-6 right-6 z-50">
+      <Button 
+        variant="outline" 
+        size="icon"
+        className="rounded-full shadow-lg w-14 h-14 bg-white hover:bg-muted"
+        onClick={() => setOpenFeedback(true)}
+      >
+        <MessageCircle className="w-6 h-6 text-primary" />
+      </Button>
+    </div>
+
+    {/* Hộp thoại Feedback */}
+    <Dialog open={openFeedback} onOpenChange={setOpenFeedback}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Phản hồi của bạn</DialogTitle>
+        </DialogHeader>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (rating === 0) {
+              toast({
+                title: "Vui lòng đánh giá trước khi gửi.",
+                variant: "destructive",
+              });
+              return;
+            }
+            toast({
+              title: "Gửi phản hồi thành công!",
+              description: `Bạn đã đánh giá ${rating} sao. Cảm ơn bạn đã đóng góp ý kiến.`,
+              variant: "default",
+            });
+            setOpenFeedback(false);
+            setRating(0); // Reset sao
+          }}
+        >
+          {/* Đánh giá sao */}
+          <div>
+            <label className="text-sm font-medium">Đánh giá của bạn:</label>
+            <StarRating rating={rating} setRating={setRating} />
+          </div>
+
+          {/* Phản hồi nội dung */}
+          <textarea 
+            className="w-full min-h-[120px] p-3 border rounded-md focus:outline-none focus:ring focus:ring-primary"
+            placeholder="Nhập phản hồi của bạn..."
+            required
+          />
+
+          <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/90">
+            Gửi phản hồi
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </>
+
+
     </div>
   );
 };
